@@ -1,0 +1,13 @@
+{
+  "name": "poupanca-e-economia",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site estático educativo para GitHub Pages, sem serviços externos.",
+  "scripts": {
+    "dev": "node scripts/preview.mjs",
+    "test": "node tests/run.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
