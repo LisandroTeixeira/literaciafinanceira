@@ -31,3 +31,16 @@ prevented=false;els['chat-input'].emit('keydown',{key:'Enter',shiftKey:false,isC
 els['chat-input'].value='Dá-me um exemplo';els['chat-input'].emit('keydown',{key:'Enter',shiftKey:false,isComposing:false,preventDefault(){prevented=true;}});assert.equal(prevented,true);assert.ok(scheduled[1].delay>=500 && scheduled[1].delay<1000);
 els['clear-chat'].emit('click');assert.deepEqual(cancelled,[2]);assert.equal(els['chat-log'].children.length,1);assert.equal(send.disabled,false);assert.equal(els['chat-status'].children.length,0);
 console.log('Interface: envio, pausa de 7,5 s, indicador, bloqueio de envios duplicados, contexto, Enter/Shift+Enter, composição e cancelamento ao recomeçar verificados.');
+
+// Send several turns and click an action attached to an older answer.
+function submit(q){els['chat-input'].value=q;els['chat-form'].emit('submit',{preventDefault(){}});scheduled.at(-1).cb();return els['chat-log'].children.at(-1);}
+const old=submit('Guardar 5 € por mês durante 12 meses');
+submit('E se guardar 10 € por mês?');
+submit('O que é inflação?');
+const action=old.children.find(e=>e.className==='message-actions').children[0];
+action.emit('click');scheduled.at(-1).cb();
+assert.match(els['chat-log'].children.at(-1).children[1].textContent,/60,00/);
+assert.doesNotMatch(els['chat-log'].children.at(-1).children[1].textContent,/120,00/);
+els['clear-chat'].emit('click');
+assert.match(submit('De onde vêm os 60 €?').children[1].textContent,/A que tema ou exemplo/);
+console.log('Interface: botão de uma resposta antiga usa os seus próprios valores; limpar a conversa remove a memória.');

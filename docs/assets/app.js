@@ -5,7 +5,8 @@
   const send=document.querySelector('.send-button');
   const status=document.getElementById('chat-status');
   const chatDialog=document.getElementById('chat-dialog');
-  let lastTopic=null, busy=false, replyTimer=null;
+  const conversation=SavingsBot.createSession();
+  let busy=false, replyTimer=null;
   function syncScrollLock(){document.body.classList.toggle('dialog-open',!!document.querySelector('dialog[open]'));}
   function openDialog(id){
     const dialog=document.getElementById(id);if(!dialog)return;
@@ -35,8 +36,8 @@
     if(!user && (result.topic || result.action==='apresentacao')){
       const actions=document.createElement('div');actions.className='message-actions';
       if(result.topic){
-        actions.append(button('Um exemplo',()=>ask('Dá-me um exemplo',result.topic)));
-        if(SavingsBot.topics.find(t=>t.id===result.topic)?.formula)actions.append(button('Ver fórmula',()=>ask('Qual é a fórmula?',result.topic)));
+        actions.append(button('Um exemplo',()=>ask('Dá-me um exemplo',result.context)));
+        if(SavingsBot.topics.find(t=>t.id===result.topic)?.formula)actions.append(button('Ver fórmula',()=>ask('Qual é a fórmula?',result.context)));
       }
       if(result.action==='apresentacao')actions.append(button('Ver apresentação',()=>openDialog('pdf-dialog')));
       wrapper.append(actions);
@@ -55,18 +56,18 @@
   }
   function ask(question,context){
     const value=question.trim().slice(0,1000);if(!value || busy)return;
-    const result=SavingsBot.respond(value,context || lastTopic);
+    const result=conversation.prepare(value,context);
     message(value,true);input.value='';resizeInput();pending(true);
     // Pausa visual pedida pelo autor: em algumas respostas, entre 5 e 10 segundos.
     const delay=Math.random()<.4 ? 5000+Math.floor(Math.random()*5001) : 500+Math.floor(Math.random()*500);
     replyTimer=setTimeout(()=>{
-      replyTimer=null;pending(false);message(result.text,false,result);lastTopic=result.topic;
+      replyTimer=null;pending(false);conversation.commit(result);message(result.text,false,result);
       // Não roubar o foco se a pessoa fechou o chat ou está a escrever noutro sítio.
       if(chatDialog.open && document.activeElement===send)input.focus();
     },delay);
   }
   function reset(){
-    if(replyTimer!==null)clearTimeout(replyTimer);replyTimer=null;pending(false);lastTopic=null;chatLog.replaceChildren();
+    if(replyTimer!==null)clearTimeout(replyTimer);replyTimer=null;pending(false);conversation.reset();chatLog.replaceChildren();
     input.value='';resizeInput();message('Olá! Em que te posso ajudar?');
     if(chatDialog.open)input.focus();
   }
