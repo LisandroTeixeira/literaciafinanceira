@@ -20,7 +20,7 @@ Para fazer um QR Code para o trabalho, usa o **endereço final do site publicado
 
 ## O que está incluído
 
-- Site adaptado a computador e telemóvel, com roxo escuro (`#160c29`), branco e turquesa (`#5ee8d3`).
+- Site adaptado a computador e telemóvel, com a paleta escolhida: azul petróleo (`#072a34` e `#0d4c5f`), cinza claro (`#e6e5df`), azul suave (`#a1bac2`) e azul médio (`#408296`). A fonte mantém-se Segoe UI, com Arial como alternativa.
 - Assistente programado com **103 temas**, incluindo **29 situações práticas de poupança**, exemplos, explicações mais simples, fórmulas e referências educativas.
 - Conversa com caixa de texto em várias linhas, Enter para enviar e Shift+Enter para mudar de linha.
 - Pausa de 5 a 10 segundos em algumas respostas, com pontos animados.
@@ -28,7 +28,7 @@ Para fazer um QR Code para o trabalho, usa o **endereço final do site publicado
 - Passos práticos e seguimentos como «mais uma dica», «e se me esquecer?» e «e se não conseguir?».
 - Planeamento com rendimento e despesas reais do exemplo, sem escolher uma percentagem obrigatória.
 - Página inicial simples: conversa e apresentação, sem catálogo de temas.
-- PDF de **9 slides**, baseado nos textos que preparámos, com abertura e download.
+- PDF de **10 páginas**, correspondente à versão em preparação enviada pelos autores, com abertura e download.
 - Créditos dos dois autores no rodapé.
 - Navegação por teclado, etiquetas de acessibilidade e respeito pela preferência de movimento reduzido.
 
@@ -77,10 +77,10 @@ O assistente combina padrões de intenção com palavras-chave e expressões e a
 
 1. Exporta a tua apresentação final em PDF.
 2. Substitui `docs/pdf/apresentacao-poupanca.pdf`, mantendo o mesmo nome.
-3. Se alterares o número ou os títulos dos slides, atualiza a indicação «9 slides» e a lista na secção Apresentação de `docs/index.html`.
+3. Quando a apresentação estiver concluída, retira a indicação «Versão em preparação» em `docs/index.html` e atualiza o número de páginas neste README.
 4. Para atualizar a capa mostrada no telemóvel, substitui `docs/assets/capa-apresentacao.png` por uma imagem do primeiro slide.
 
-O PDF incluído não tem QR Code, porque o endereço de publicação ainda não foi definido.
+O PDF incluído é a versão em preparação enviada pelos autores. Antes de usar a versão final, confirma também o destino do QR Code.
 
 ## Editar o site
 
@@ -116,7 +116,7 @@ npm test
 
 ## Verificação realizada
 
-Foram verificadas respostas, contexto da conversa, memória de valores, recolha de dados em várias mensagens, retoma de exemplos, correções, mudanças de assunto, isolamento entre sessões, comparações, cálculos e limites de entradas. Também foram testados o atraso antes das respostas, o bloqueio de envios duplicados, Enter/Shift+Enter e o cancelamento de uma resposta ao recomeçar a conversa. O PDF foi renderizado e revisto visualmente nas nove páginas. Foram verificados os recursos locais e a sintaxe dos scripts. A infraestrutura de navegador não esteve disponível para confirmar visualmente as várias larguras de ecrã; a adaptação foi implementada com estilos responsivos.
+Foram verificadas respostas, contexto da conversa, memória de valores, recolha de dados em várias mensagens, retoma de exemplos, correções, mudanças de assunto, isolamento entre sessões, comparações, cálculos e limites de entradas. Também foram testados o atraso antes das respostas, o bloqueio de envios duplicados, Enter/Shift+Enter e o cancelamento de uma resposta ao recomeçar a conversa. As cinco cores da paleta foram extraídas da imagem enviada pelos autores e foi verificado o contraste dos textos e botões. A capa foi obtida através da renderização do PDF enviado pelos autores. O PDF foi incluído sem modificar o seu conteúdo. Foram verificados os recursos locais e a sintaxe dos scripts. A infraestrutura de navegador não esteve disponível para confirmar visualmente as várias larguras de ecrã; a adaptação foi implementada com estilos responsivos.
 
 ## Referências educativas
 
