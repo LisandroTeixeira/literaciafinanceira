@@ -3,7 +3,7 @@
   const topics=root.SavingsKnowledge;
   const normalize=text=>String(text).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
   const writtenNumbers={um:1,uma:1,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,sete:7,oito:8,nove:9,dez:10,onze:11,doze:12,cem:100};
-  const normNumber=text=>String(text).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/−/g,'-').replace(/\b(um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|cem)\b(?=\s*(?:€|euros?\b|por cento\b|%|anos?\b|mes(?:es)?\b|semanas?\b|por (?:mes|semana|ano)\b))/g,w=>writtenNumbers[w]);
+  const normNumber=text=>String(text).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/−/g,'-').replace(/\b(um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|cem)\b(?=\s*(?:€|euros?\b|por cento\b|%|anos?\b|mes(?:es)?\b|semanas?\b|por (?:mes|semana|ano|dia)\b))/g,w=>writtenNumbers[w]);
   const money=value=>new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR'}).format(value);
   const number=value=>new Intl.NumberFormat('pt-PT',{maximumFractionDigits:4}).format(value);
   const NUM='(-?(?:[0-9]{1,3}(?:[. ][0-9]{3})+(?:,[0-9]+)?|[0-9]+(?:[.,][0-9]+)?))';
@@ -14,7 +14,7 @@
   function calculate(raw){
     const text=normNumber(raw);
     if(!/\d/.test(text))return null;
-    const duration=text.match(new RegExp(NUM+'\\s*(anos?|mes(?:es)?|semanas?)\\b'));
+    const duration=text.match(new RegExp(NUM+'\\s*(anos?|mes(?:es)?|semanas?|dias?)\\b'));
     const periods=duration?parse(duration[1]):null;
     const unit=duration?duration[2]:null;
     if(/juros? (simples|compostos)/.test(text)){
@@ -28,22 +28,13 @@
       if(!Number.isFinite(total) || total>1e15)return result('Os valores são demasiado grandes para este exercício. Usa valores mais pequenos.',type);
       return result((type==='simpleinterest'?'Juros simples':'Juros compostos')+':\n'+(type==='simpleinterest'?number(capital)+' × '+number(rate/100)+' × '+number(periods)+' = '+money(total-capital)+' de juros.':number(capital)+' × (1 + '+number(rate/100)+')^'+number(periods)+' = '+money(total)+'.')+'\nMontante final: '+money(total)+'.\nJuros: '+money(total-capital)+'.\n\nPressupostos: taxa anual constante; '+(type==='compoundinterest'?'capitalização anual; ':'')+'sem reforços, impostos ou comissões.',type,{kind:type,capital,rate,time:periods,timeUnit:'ano'});
     }
-    const periodic=text.match(new RegExp(NUM+'\\s*(?:€|euros?)?\\s*(?:por|a cada|todos os|todas as)\\s*(mes|semana|ano)\\b'));
+    const periodic=text.match(new RegExp(NUM+'\\s*(?:€|euros?)?\\s*(?:por|a cada|todos os|todas as)\\s*(mes|semana|ano|dia)\\b'));
     if(periodic && duration && /poup|guard|junt|economiz/.test(text)){
       const amount=parse(periodic[1]), originUnit=periodic[2], destination=unit;
       if(amount<0 || periods<0)return result('Usa uma quantia e um prazo não negativos.');
-      let count;
-      if(originUnit==='mes' && destination.startsWith('ano'))count=periods*12;
-      else if(originUnit==='ano' && destination.startsWith('mes'))return result('Depósitos anuais e um prazo em meses exigem saber em que datas os depósitos são feitos. Usa o prazo em anos para esta soma simples.');
-      else if(originUnit==='semana' && destination.startsWith('ano'))count=periods*52;
-      else if(originUnit==='ano' && destination.startsWith('semana'))return result('Usa um prazo em anos para somar quantias guardadas uma vez por ano.');
-      else if((originUnit==='mes' && destination.startsWith('mes')) || (originUnit==='ano' && destination.startsWith('ano')) || (originUnit==='semana' && destination.startsWith('semana')))count=periods;
-      else return result('Para contar depósitos, usa a mesma unidade (semanas, meses ou anos). Posso converter 1 ano em 12 meses ou, aproximadamente, em 52 semanas.','goals');
-      // Vários valores monetários ou juros tornam o problema diferente desta soma simples.
-      if(/ja tenho|inicial|juros|aument|reforco/.test(text))return result('Esta soma simples usa só uma quantia regular e um prazo, sem saldo inicial nem juros. Para juros, indica capital, taxa anual e tempo; para depósitos, por exemplo: «Guardar 10 € por mês durante 2 anos».');
-      if(!Number.isInteger(count))return result('O prazo indicado corresponde a uma fração de um período de poupança. Indica um número inteiro de depósitos ou um prazo que dê períodos completos.');
-      if(count>1e6 || amount>1e12)return result('Usa valores mais pequenos para este exercício.');
-      return result(number(amount)+' € × '+number(count)+' '+(originUnit==='mes'?'meses':originUnit==='semana'?'semanas':'anos')+' = '+money(amount*count)+'.\n\nÉ o total das quantias guardadas, sem juros, impostos ou comissões.'+(originUnit==='semana' && destination.startsWith('ano')?' Foi usada a aproximação de 52 semanas por ano.':''),'saving',{kind:'periodic',amount,unit:originUnit,time:periods,timeUnit:unit.startsWith('ano')?'ano':unit.startsWith('mes')?'mes':'semana'});
+      if(/com juros|juros de|juros a|com comissoes|com impostos/.test(text))return result('Para juntar depósitos e juros, são necessárias as datas dos depósitos e as condições de capitalização. Podemos somar depósitos sem juros ou calcular juros sobre um capital inicial.');
+      const initial=field(text,'(?:ja tenho|ja tinha|saldo inicial|comeco com)') ?? 0;
+      return evaluate({kind:'periodic',amount,unit:originUnit,time:periods,timeUnit:unitId(destination),initial},'saving');
     }
     if(/juntar|objetivo|meta/.test(text) && duration && unit.startsWith('mes')){
       const target=find(text,'(?:juntar|objetivo|meta)\\s*(?:de |e |: |:)?'+NUM+'\\s*(?:€|euros?)?');
@@ -91,10 +82,20 @@
     return edits+(i<a.length || j<b.length?1:0)<=1;
   }
   const indexed=topics.map(topic=>({topic,aliases:topic.aliases.map(normalize)}));
+  function queryText(raw){
+    let text=normalize(raw).replace(/\bpq\b/g,'por que').replace(/\bq\b/g,'que').replace(/\bn\b/g,'nao').replace(/\btb\b/g,'tambem');
+    const vocabulary=['poupanca','orcamento','objetivo','despesas','impulso','subscricoes','mesada'];
+    text=text.split(' ').map(word=>vocabulary.find(term=>word!==term && near(word,term)) || word).join(' ');
+    return text;
+  }
   function rankings(text){
+    text=queryText(text);
     let matches=indexed.map(({topic,aliases})=>{
-      const exact=aliases.filter(alias=>(' '+text+' ').includes(' '+alias+' '));
-      return {topic,score:exact.length?Math.max(...exact.map(a=>4+a.split(' ').length*3+a.length/30))+.1*exact.length:0};
+      const exact=aliases.filter(alias=>!(topic.id==='eu' && alias==='euro' && /\b(?:\d+|um|dois|cinco) euros?\b/.test(text)) && (' '+text+' ').includes(' '+alias+' '));
+      const phraseScore=exact.length?Math.max(...exact.map(a=>4+a.split(' ').length*3+a.length/30))+.1*exact.length:0;
+      const matched=(topic.intents||[]).filter(group=>group.every(pattern=>pattern.test(text)));
+      const intentScore=matched.length?(topic.id==='saving'?10:topic.guide?43:34)+Math.max(...matched.map(group=>group.length*5)):0;
+      return {topic,score:Math.max(phraseScore,intentScore)+(intentScore?phraseScore/10:0)};
     }).filter(item=>item.score>0).sort((a,b)=>b.score-a.score);
     if(matches.length)return matches;
     const words=text.split(' ');
@@ -103,7 +104,10 @@
   const guidance='Podes reformular a pergunta ou pedir uma definição, um exemplo ou um cálculo.';
   function render(topic, mode='normal'){
     const response=renderText(topic,mode);
-    if(mode==='example' || mode==='simple' || mode==='detail' || topic.id==='allowance')response.model=exampleModels[topic.id]?{...exampleModels[topic.id]}:undefined;
+    if(mode==='example' || mode==='simple' || mode==='detail' || topic.id==='allowance'){
+      const model=topic.exampleModel || exampleModels[topic.id];
+      response.model=model?{...model}:undefined;
+    }
     return response;
   }
   function renderText(topic, mode='normal'){
@@ -121,6 +125,7 @@
     if(/^(ola|oi|bom dia|boa tarde|boa noite|hey)( tudo bem)?$/.test(text))return {text:'Olá! Em que te posso ajudar?',topic:null};
     if(/^(obrigad[oa]|muito obrigad[oa]|valeu|obg)$/.test(text))return {text:'De nada! Queres um exemplo, uma explicação mais simples ou outro tema?',topic:previous || null};
     if(/^(ajuda|o que sabes|temas|como funciona|que perguntas posso fazer)$/.test(text))return {text:'Escreve a tua dúvida sobre poupança ou Economia. Posso explicar conceitos, dar exemplos e ajudar com cálculos. Depois podes pedir «Explica melhor» ou «Dá-me um exemplo».',topic:null};
+    const plan=planningQuestion(input);if(plan)return plan;
     const calculated=calculate(input);if(calculated)return calculated;
     const previousTopic=topics.find(t=>t.id===previous);
     const followup=/^(e )?(um exemplo|da me (um )?exemplo|podes dar (um )?exemplo|por exemplo|exemplo|explica melhor|mais detalhes|nao percebi|como assim|mais simples|simplifica|resume|resumo|formula|qual (e )?(a )?formula|e como se calcula|como se calcula)$/;
@@ -129,6 +134,13 @@
     const matches=rankings(text);
     if(matches.length){
       const best=matches[0].topic;
+      if(best.guide && /passo a passo|plano simples/.test(text))return {topic:best.id,text:(steps[best.id] || steps.habits).map((step,i)=>(i+1)+'. '+step).join('\n')};
+      const parts=text.split(/\s+(?:e tambem|e|alem disso)\s+|;/).map(part=>rankings(part)[0]).filter(Boolean);
+      const practical=parts.filter(item=>item.topic.guide || ['habits','impulse','little'].includes(item.topic.id));
+      if(practical.length>1 && practical[0].topic.id!==practical[1].topic.id && !/diferenca|compar|versus/.test(text)){
+        const pair=practical.slice(0,2).map(item=>item.topic);
+        return {text:pair.map(topic=>topic.label+'\n'+topic.answer).join('\n\n'),topic:pair[0].id,related:[pair[1].id]};
+      }
       const mode=/\b(exemplo|exemplos)\b/.test(text)?'example':/\b(formula|calcula)\b/.test(text)?'formula':/\b(simples|simplifica|resume)\b/.test(text) && !/juros simples/.test(text)?'simple':'normal';
       if(matches.length>1 && /diferenca|diferencas|disting|compar|versus|\bvs\b/.test(text)){
         // Se uma expressão específica já cobre a comparação, não acrescentar um tema genérico.
@@ -162,9 +174,9 @@
     tradebalance:{kind:'tradebalance',exports:100,imports:120},
     publicbudget:{kind:'publicbudget',income:90,expense:100}
   };
-  const units={mes:['mês','meses'],semana:['semana','semanas'],ano:['ano','anos']};
+  const units={dia:['dia','dias'],mes:['mês','meses'],semana:['semana','semanas'],ano:['ano','anos']};
   const unitName=(unit,n)=>units[unit]?.[n===1?0:1] || unit;
-  const unitId=s=>s.startsWith('ano')?'ano':s.startsWith('mes')?'mes':'semana';
+  const unitId=s=>s.startsWith('ano')?'ano':s.startsWith('mes')?'mes':s.startsWith('dia')?'dia':'semana';
   const kindTopic=kind=>({periodic:'saving',goal:'goals'})[kind] || kind;
   const slotNames={amount:'quantia guardada em cada período',unit:'frequência dos depósitos',time:'prazo',timeUnit:'unidade do prazo',target:'objetivo em euros',capital:'capital inicial em euros',rate:'taxa anual em %',income:'rendimento em euros',expense:'despesas em euros',saving:'poupança em euros',unemployed:'número de desempregados',active:'população ativa',output:'produção',workers:'número de trabalhadores',intermediate:'consumo intermédio',exports:'exportações',imports:'importações',initial:'valor inicial',final:'valor final'};
   const requirements={periodic:['amount','unit','time','timeUnit'],goal:['target','time','timeUnit'],simpleinterest:['capital','rate','time','timeUnit'],compoundinterest:['capital','rate','time','timeUnit'],budget:['income','expense'],savingsrate:['saving','income'],unemployment:['unemployed','active'],productivity:['output','workers'],inflation:['initial','final'],growth:['initial','final'],valueadded:['output','intermediate'],tradebalance:['exports','imports'],publicbudget:['income','expense']};
@@ -173,6 +185,8 @@
     if(m.unit===m.timeUnit)return m.time;
     if(m.timeUnit==='ano' && m.unit==='mes')return m.time*12;
     if(m.timeUnit==='ano' && m.unit==='semana')return m.time*52;
+    if(m.timeUnit==='ano' && m.unit==='dia')return m.time*365;
+    if(m.timeUnit==='semana' && m.unit==='dia')return m.time*7;
     return null;
   }
   function checkedCalculation(raw,m,topic){
@@ -185,6 +199,7 @@
       m={...m,time:Math.ceil(Math.max(0,m.target-(m.initial||0))/m.amount),timeUnit:m.unit};
     }
     const need=missing(m);
+    if(need.length && m.kind==='budget' && m.planning)return {topic,model:m,pending:true,text:need.includes('income')?'Quanto recebes e quanto gastas em despesas necessárias no mesmo período?': 'Recebes '+money(m.income)+'. Quanto gastas em despesas necessárias nesse mesmo período?'};
     if(need.length)return {topic,model:m,pending:true,text:'Para continuar, indica '+need.filter(k=>k!=='timeUnit' || !need.includes('time')).map(k=>slotNames[k]).join(' e ')+'.'+(/interest/.test(m.kind)?' Usa uma taxa anual e um prazo em anos.':'')};
     if(Object.values(m).some(v=>typeof v==='number' && (!Number.isFinite(v) || Math.abs(v)>1e12)))return {topic,model:m,text:'Esses valores são demasiado grandes para este exercício. Usa valores finitos mais pequenos.'};
     const invalid=message=>({topic,model:m,text:message,invalid:true});
@@ -196,7 +211,7 @@
       if(!Number.isInteger(count) || count>1e6)return invalid('Indica um prazo que corresponda a um número inteiro de depósitos, até um milhão.');
       const total=(m.initial||0)+m.amount*count;
       if(total>1e15)return invalid('O total seria demasiado grande para este exercício. Usa valores mais pequenos.');
-      return {topic,model:m,calculation:true,text:(m.task==='reach'?'Para atingir '+money(m.target)+', precisas de '+number(count)+' '+unitName(m.unit,count)+' guardando '+money(m.amount)+' por '+unitName(m.unit,1)+'.\n':'')+(m.initial?money(m.initial)+' de saldo inicial + ':'')+money(m.amount)+' × '+number(count)+' '+unitName(m.unit,count)+' = '+money(total)+'.\n\n'+(m.income!==undefined?'No exemplo, o rendimento é '+money(m.income)+' por '+unitName(m.unit,1)+'. '+(m.amount<=m.income?'Depois de guardar essa quantia, ficam '+money(m.income-m.amount)+' para os gastos.':'A quantia que pretendes guardar ultrapassa esse rendimento; seria preciso rever o plano ou indicar outra fonte de dinheiro.')+'\n':'')+'Sem juros, impostos ou comissões.'+(m.unit==='semana' && m.timeUnit==='ano'?' Foram usadas 52 semanas por ano, como aproximação.':'')};
+      return {topic,model:m,calculation:true,text:(m.task==='reach'?'Para atingir '+money(m.target)+', precisas de '+number(count)+' '+unitName(m.unit,count)+' guardando '+money(m.amount)+' por '+unitName(m.unit,1)+'.\n':'')+(m.initial?money(m.initial)+' de saldo inicial + ':'')+money(m.amount)+' × '+number(count)+' '+unitName(m.unit,count)+' = '+money(total)+'.\n\n'+(m.income!==undefined?'No exemplo, o rendimento é '+money(m.income)+' por '+unitName(m.unit,1)+'. '+(m.amount<=m.income?'Depois de guardar essa quantia, ficam '+money(m.income-m.amount)+' para os gastos.':'A quantia que pretendes guardar ultrapassa esse rendimento; seria preciso rever o plano ou indicar outra fonte de dinheiro.')+'\n':'')+'Sem juros, impostos ou comissões.'+(m.unit==='semana' && m.timeUnit==='ano'?' Foram usadas 52 semanas por ano, como aproximação.':m.unit==='dia' && m.timeUnit==='ano'?' Foi usado um ano de 365 dias; um ano bissexto teria mais um dia.':'')};
     }
     if(m.kind==='goal'){
       if(m.target<0 || m.time<=0 || (m.initial||0)<0 || !Number.isInteger(m.time))return invalid('Indica uma meta e saldo inicial não negativos e um número inteiro de períodos maior do que zero.');
@@ -210,7 +225,11 @@
       return {topic,model:m,calculation:true,text:label+': '+number(m[a])+' − '+number(m[b])+' = '+number(m[a]-m[b])+(m.kind==='valueadded'?' €.':', nas mesmas unidades das parcelas.')+(m.kind==='publicbudget' || m.kind==='tradebalance'?'\n'+(m[a]<m[b]?'O saldo é negativo: há défice.':m[a]>m[b]?'O saldo é positivo: há excedente.':'O saldo é zero.'): '')};
     }
     if(/interest/.test(m.kind))return checkedCalculation((m.kind==='simpleinterest'?'Juros simples':'Juros compostos')+': capital '+m.capital+' €, taxa anual '+m.rate+'%, tempo '+m.time+' '+unitName(m.timeUnit,m.time),m,topic);
-    if(m.kind==='budget')return checkedCalculation('Orçamento: rendimento '+m.income+', despesas '+m.expense,m,topic);
+    if(m.kind==='budget'){
+      const answer=checkedCalculation('Orçamento: rendimento '+m.income+', despesas '+m.expense,m,topic);
+      if(m.planning && !answer.invalid)answer.text+='\n\n'+(m.income>m.expense?'Esta é a margem antes de outros gastos e imprevistos. Não tens de guardar tudo: escolhe uma quantia que consigas manter e revê o plano.':m.income===m.expense?'Com estes dados, não sobra dinheiro. Não precisas de forçar uma poupança: revê o orçamento quando for possível.':'Com estes dados, o orçamento está desequilibrado. Primeiro, revê as despesas e o rendimento com apoio de alguém de confiança, se precisares.');
+      return answer;
+    }
     if(m.kind==='savingsrate')return checkedCalculation('Taxa de poupança: poupança '+m.saving+', rendimento '+m.income,m,topic);
     if(m.kind==='unemployment')return checkedCalculation('Taxa de desemprego: desempregados '+m.unemployed+', população ativa '+m.active,m,topic);
     if(m.kind==='productivity')return checkedCalculation('Produtividade: produção '+m.output+', trabalhadores '+m.workers,m,topic);
@@ -220,18 +239,18 @@
   function edits(raw,m){
     const t=normNumber(raw),change={};
     const set=(key,value)=>{if(value!==null)change[key]=value;};
-    const period=t.match(new RegExp(NUM+'\\s*(?:€|euros?)?\\s*(?:por|a cada|todos os|todas as|ao)\\s*(mes|semana|ano)\\b'));
-    const duration=t.match(new RegExp(NUM+'\\s*(anos?|mes(?:es)?|semanas?)\\b'));
+    const period=t.match(new RegExp(NUM+'\\s*(?:€|euros?)?\\s*(?:por|a cada|todos os|todas as|ao)\\s*(mes|semana|ano|dia)\\b'));
+    const duration=t.match(new RegExp(NUM+'\\s*(anos?|mes(?:es)?|semanas?|dias?)\\b'));
     if(duration){change.time=parse(duration[1]);change.timeUnit=unitId(duration[2]);}
     if(m.kind==='periodic'){
       if(period){change.amount=parse(period[1]);change.unit=period[2];}
-      else set('amount',field(t,'(?:guardar|guardasse|guardarmos|guardaramos|guardo|poupar|poupasse|poupo|depositar|depositasse|quantia|deposito mensal|valor mensal)'));
+      else set('amount',field(t,'(?:guardar|guardasse|guardarmos|guardaramos|guardo|poupar|poupasse|poupo|economizar|depositar|depositasse|quantia|deposito mensal|valor mensal)'));
       set('initial',field(t,'(?:ja tenho|ja tinha|saldo inicial|inicialmente tenho|comeco com)'));
       set('income',field(t,'(?:rendimento|recebo|recebesse|mesada)'));
       set('target',field(t,'(?:atingir|chegar a|objetivo(?: de)?|meta(?: de)?|juntar)'));
     }
     if(m.kind==='goal'){
-      set('target',field(t,'(?:juntar|objetivo(?: de)?|meta(?: de)?|atingir|chegar a)'));
+      set('target',field(t,'(?:juntar|objetivo(?: de)?|meta(?: de)?|atingir|chegar a|custa|preciso de)'));
       set('initial',field(t,'(?:ja tenho|ja tinha|saldo inicial|comeco com)'));
     }
     if(/interest/.test(m.kind)){
@@ -243,7 +262,7 @@
       if(/\bsimples\b/.test(t))change.kind='simpleinterest';
     }
     if(m.kind==='budget' || m.kind==='savingsrate' || m.kind==='publicbudget'){
-      set('income',field(t,'(?:rendimento(?: disponivel)?|receitas?|recebo|recebesse|ganho|ganhasse)'));
+      set('income',field(t,'(?:rendimento(?: disponivel)?|receitas?|recebo|recebesse|ganho|ganhasse|mesada(?: de)?)'));
       if(m.kind==='budget'){const saved=field(t,'(?:guardar|guardasse|guardo|poupar|poupasse|poupo)');if(saved!==null && (change.income??m.income)!==undefined)change.expense=(change.income??m.income)-saved;}
       set(m.kind==='savingsrate'?'saving':'expense',field(t,m.kind!=='savingsrate'?'(?:despesas?|consumo|gasto|gastasse|gastar)':'(?:poupanca|guardo|guardar|poupo|poupasse)'));
     }
@@ -287,7 +306,7 @@
     else if(/orcamento do estado|saldo orcamental/.test(text))kind='publicbudget';
     else if(/orcamento|saldo|sobr/.test(text))kind='budget';
     else if(/inflacao|crescimento|variacao/.test(text))kind=/crescimento/.test(text)?'growth':'inflation';
-    else if(/juntar|objetivo|meta/.test(text))kind='goal';
+    else if(/juntar|objetivo|meta|quero comprar|pretendo comprar/.test(text))kind='goal';
     else if(/guardar|poupar|poupanca|depositar/.test(text))kind='periodic';
     if(!kind || !/\d/.test(text) && !/calcular|calcula|calculo|quanto/.test(text))return null;
     const model={kind};Object.assign(model,edits(input,model));
@@ -325,7 +344,7 @@
       const pairs={valueadded:['output','intermediate'],tradebalance:['exports','imports'],publicbudget:['income','expense']},[a,b]=pairs[m.kind],u=m.kind==='valueadded'?'€':'';
       add(m[a],slotNames[a],'É a primeira parcela do exemplo.',u);add(m[b],slotNames[b],'É a parcela subtraída à primeira.',u);add(m[a]-m[b],m.kind==='valueadded'?'VAB':'saldo',number(m[a])+' − '+number(m[b])+' = '+number(m[a]-m[b])+'.',u);
     }else if(m.kind==='budget'){
-      add(m.income,'rendimento','É o dinheiro que entra no orçamento.');add(m.expense,'despesas','É o dinheiro gasto neste exemplo.');add(m.income-m.expense,'saldo / poupança',money(m.income)+' − '+money(m.expense)+' = '+money(m.income-m.expense)+'.');
+      add(m.income,'rendimento','É o dinheiro que entra no orçamento.');add(m.expense,'despesas','É o dinheiro gasto neste exemplo.');add(m.income-m.expense,m.planning?'margem disponível':'saldo / poupança',money(m.income)+' − '+money(m.expense)+' = '+money(m.income-m.expense)+'.');
     }else if(m.kind==='savingsrate'){
       add(m.income,'rendimento disponível','É o rendimento usado como base da percentagem.');add(m.saving,'poupança','É a parte do rendimento que foi guardada.');add(m.saving/m.income*100,'taxa de poupança',number(m.saving)+' ÷ '+number(m.income)+' × 100 = '+number(m.saving/m.income*100)+'%.','%');
     }else if(m.kind==='unemployment'){
@@ -354,18 +373,69 @@
     if(/capital/.test(text))pattern=/capital inicial/;
     else if(/juros/.test(text) && !/taxa/.test(text))pattern=/^juros$/;
     else if(/taxa|percentagem|por cento/.test(text))pattern=/taxa|percentual/;
-    else if(/gastar|gastos|despesas|sobr/.test(text))pattern=/dinheiro para gastar|despesas|saldo \/ poupança/;
+    else if(/gastar|gastos|despesas|sobr/.test(text))pattern=/dinheiro para gastar|despesas|saldo \/ poupança|margem disponível/;
     else if(/receb|rendimento|mesada/.test(text))pattern=/rendimento/;
     else if(/prazo|tempo|meses|semanas|anos|depositos/.test(text))pattern=/prazo|número de depósitos/;
     else if(/meta|objetivo/.test(text))pattern=/objetivo/;
-    else if(/resultado|esse valor|esse numero/.test(text))pattern=/total poupado|montante final|saldo|variação percentual|produtividade|taxa|VAB/;
-    else if(/total|montante|fim|final|acumul|juntou|juntado/.test(text))pattern=/total poupado|montante final|saldo|valor final/;
-    else if(/guard|poup|por mes|por semana|quantia/.test(text))pattern=/quantia|^poupança$|saldo \/ poupança/;
+    else if(/resultado|esse valor|esse numero/.test(text))pattern=/total poupado|montante final|saldo|margem disponível|variação percentual|produtividade|taxa|VAB/;
+    else if(/total|montante|fim|final|acumul|juntou|juntado/.test(text))pattern=/total poupado|montante final|saldo|margem disponível|valor final/;
+    else if(/guard|poup|por mes|por semana|quantia/.test(text))pattern=/quantia|^poupança$|saldo \/ poupança|margem disponível/;
     const found=pattern?facts.filter(f=>pattern.test(f.label)):[];
     if(found.length)return {topic:context.topic,model:context.model,text:found.map(f=>f.formatted+' — '+f.label+'. '+f.explanation).join('\n\n')};
     if(context.model && /como|por que|porque|de onde|valor|valores/.test(text))return {...evaluate(context.model,context.topic),text:'Vamos usar os dados deste exemplo:\n'+evaluate(context.model,context.topic).text};
     return null;
   }
+  function planningQuestion(raw,context){
+    const text=queryText(raw);
+    if(!/quanto.*(?:devo|posso|consigo|aconselhas).*(?:poupar|guardar)|(?:que|qual) percentagem.*(?:poupar|guardar)/.test(text))return null;
+    const same=context?.model?.kind==='budget' && /neste|nesse|nessa|nesse|exemplo|isso|com esses|com estes|entao/.test(text);
+    const model={kind:'budget',planning:true,...(same?context.model:{})};
+    Object.assign(model,edits(raw,model));
+    const topic=/mesada/.test(text)?'allowanceplan':'little';
+    const answer=evaluate(model,topic);
+    if(answer.pending){
+      const needed=missing(model);
+      answer.text=(needed.length===2?'Não há uma quantia ou percentagem certa para toda a gente. Primeiro, temos de perceber o que sobra depois das despesas necessárias.\n\n':'')+
+        (needed.includes('income')?'Quanto recebes num período, por exemplo por mês? Indica também as despesas desse mesmo período.':'Recebes '+money(model.income)+'. Quanto gastas em despesas necessárias nesse mesmo período?');
+    }
+    return answer;
+  }
+  const steps={
+    habits:['Escolhe um objetivo e escreve quanto custa.','Anota o dinheiro que recebes e as despesas necessárias.','Escolhe uma quantia possível para guardar regularmente.','Separa essa quantia e acompanha o progresso.','Revê o plano quando mudarem os teus gastos.'],
+    allowanceplan:['Confirma quanto recebes de mesada e com que frequência.','Reserva o dinheiro das despesas necessárias.','Escolhe uma quantia que caiba no que resta para guardar.','Define um limite para os gastos opcionais.','Regista o que guardaste e revê o plano na próxima mesada.'],
+    selfcontrol:['Durante alguns dias, regista os teus gastos.','Identifica o que costuma levar-te a comprar sem planear.','Define um limite para os gastos opcionais.','Espera antes de uma compra que não estava no plano.','Separa o dinheiro do objetivo e revê o que resultou.'],
+    expenselog:['Regista cada compra e a quantia paga.','Agrupa os gastos por finalidade.','Soma o total do mesmo período em que recebeste dinheiro.','Compara o total com o rendimento.','Escolhe uma mudança possível e volta a acompanhar os gastos.'],
+    envelopes:['Identifica despesas necessárias, gastos pessoais e objetivos.','Calcula a quantia disponível.','Divide o dinheiro segundo as tuas prioridades.','Identifica cada envelope ou parte do registo.','Acompanha os gastos e ajusta as divisões se for preciso.'],
+    goaladjust:['Confirma o preço do objetivo e o saldo já guardado.','Calcula quanto falta juntar.','Divide pelo número de períodos disponíveis.','Compara essa quantia com a margem do orçamento.','Se não couber, prolonga o prazo ou revê o objetivo.'],
+    impulse:['Pergunta se a compra é necessária ou estava planeada.','Confirma o custo total, incluindo outros encargos.','Compara com o dinheiro destinado a esse tipo de gasto.','Espera e volta a decidir com mais calma.'],
+    schoolsaving:['Confirma o material que já tens e o que precisas realmente.','Planeia lanches e deslocações com apoio em casa, se for necessário.','Compara o custo das opções adequadas.','Evita compras apenas para acompanhar colegas.','Regista os gastos e revê o que podes alterar.'],
+    householdsaving:['Planeia as compras e faz uma lista.','Confirma o que já existe em casa.','Compara o preço por unidade e o custo final.','Evita comprar quantidades que serão desperdiçadas.','Combina mudanças de serviços ou contratos com quem gere a casa.'],
+    subscriptions:['Lista os serviços que pagas.','Anota o preço e a próxima renovação.','Confirma quais realmente usas.','Lê as condições antes de cancelar ou alterar.','Revê novamente a lista quando aderires a outro serviço.']
+  };
+  function guideFollowup(raw,context){
+    if(!context)return null;
+    const text=queryText(raw),topic=topics.find(t=>t.id===context.topic);
+    if(!topic || topic.category!=='Poupança')return null;
+    if(/(?:o |a )?(segundo|segundo ponto|outro ponto|outro tema)/.test(text) && context.related?.length)return render(topics.find(t=>t.id===context.related[0]),'detail');
+    if(topic.id==='budgetrule' && /obrigator|tenho de|tenho que|e se.*nao|posso.*menos/.test(text))return {topic:topic.id,text:'Não é obrigatório seguir essa divisão. Os 20% são uma referência nesse método, não uma exigência. Se as despesas essenciais ocuparem mais do orçamento, adapta a percentagem e o prazo às tuas possibilidades.'};
+    const practical=topic.guide || ['habits','little','impulse','budget'].includes(topic.id);
+    if(!practical)return null;
+    if(/^(e |mas )?(se |e se )?nao (conseguir|der|for possivel)|^(e |mas )?se (eu )?nao tiver dinheiro/.test(text))return render(topics.find(t=>t.id==='little'),'detail');
+    if(/^(e |mas )?(eu )?gosto de comprar|^(e |mas )?(tambem )?quero.*divertir/.test(text))return render(topics.find(t=>t.id==='leisure'));
+    if(/se (me )?esquecer|esqueco me|me esquecer/.test(text))return render(topics.find(t=>t.id==='autosave'));
+    if(/precisar (dele|desse dinheiro|do dinheiro|dessa poupanca)/.test(text))return render(topics.find(t=>t.id==='usesavings'));
+    if(/passo a passo|como faco isso|como aplicar isso|como por em pratica|um plano simples/.test(text)){
+      const list=steps[topic.id] || steps.habits;
+      return {topic:topic.id,text:list.map((step,i)=>(i+1)+'. '+step).join('\n'),model:context.model};
+    }
+    if(/^(?:e )?(?:mais (?:uma )?(?:dica|dicas|conselhos)|outra dica|outro conselho|da me outra dica|podes dar mais dicas)$/.test(text)){
+      const tips=steps[topic.id] || topic.detail.split(/(?<=[.!?])\s+/);
+      const index=context.tipIndex || 0;
+      return {topic:topic.id,text:tips[index%tips.length],tipIndex:index+1,model:context.model};
+    }
+    return null;
+  }
+
   function createSession(){
     let active=null,history=[];
     function prepare(input,anchor){
@@ -385,8 +455,8 @@
       }
       const relatedTerms={periodic:['saving','goals','allowance','income'],goal:['saving','goals'],budget:['saving','income','consumption','budget'],simpleinterest:['interest','simpleinterest','compoundinterest'],compoundinterest:['interest','simpleinterest','compoundinterest'],savingsrate:['savingsrate','saving','income'],unemployment:['unemployment','demography'],productivity:['productivity','production'],valueadded:['valueadded','production','consumption'],tradebalance:['tradebalance'],publicbudget:['publicbudget','income'],inflation:['inflation'],growth:['growth']};
       const linked=valuesIntent && context?.model && (relatedTerms[context.model.kind]||[]).includes(best?.id) && !/o que|defin|diferenca|compar/.test(text);
-      const explicitNew=best && context && best.id!==context.topic && !linked && !(
-        context.model && Object.keys(edits(value,context.model)).length &&
+      const explicitNew=best && topical[0].score>3 && context && best.id!==context.topic && !linked && !(
+        !best.guide && context.model && Object.keys(edits(value,context.model)).length &&
         (follow || /\d/.test(text) && !/o que|explica|defin|significa/.test(text))
       );
       if(!value)answer={text:'Escreve a tua pergunta para começarmos.',topic:null,clarification:true};
@@ -399,8 +469,12 @@
       else if(/\b(atual|atuais|hoje|agora|202[0-9]|203[0-9]|mais recente|neste momento)\b/.test(text) && /\b(taxa|pib|inflacao|desemprego|juro|divida|membros|valor)\b/.test(text))answer=respond(value);
       else if(/diferenca|diferencas|disting|compar|versus|\bvs\b/.test(text) && topical.length)answer=respond(value);
       else {
+        const practical=!explicitNew?guideFollowup(value,context):null;
+        const planned=planningQuestion(value,context);
         const full=calculate(value);
-        if(full?.model)answer=full;
+        if(practical)answer=practical;
+        else if(planned)answer=planned;
+        else if(full?.model)answer=full;
         else if(context?.model && !explicitNew){
           const changes=edits(value,context.model);
           const timeQuestion=/quanto tempo|quantos (meses|anos|semanas)|quando/.test(text) && /atingir|chegar|juntar|meta|objetivo/.test(text);
@@ -430,6 +504,7 @@
             else {answer=render(topic,mode);if(context.model){answer.model=context.model;answer.text=topic.answer+'\n\n'+evaluate(context.model,context.topic).text;}}
           }
         }
+        if(!answer && best?.guide && (explicitNew || !context || !follow))answer=respond(value);
         if(!answer){
           const fresh=freshModel(value);
           if(fresh && (explicitNew || !context?.model || !follow))answer=evaluate(fresh);
@@ -441,7 +516,7 @@
       if(answer.topic){
         const same=context?.topic===answer.topic;
         const model=answer.model || (retain && same?context.model:undefined);
-        answer.context={topic:answer.topic,text:answer.text,source:same && (!answer.model || answer.model===context.model)?context.source || context.text:answer.text,model:model?{...model}:undefined,pending:!!answer.pending};
+        answer.context={topic:answer.topic,text:answer.text,source:same && (!answer.model || answer.model===context.model)?context.source || context.text:answer.text,model:model?{...model}:undefined,pending:!!answer.pending,related:answer.related || (same?context.related:undefined),tipIndex:answer.tipIndex || 0};
       }else answer.context=null;
       return answer;
     }

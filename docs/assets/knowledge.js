@@ -17,7 +17,7 @@
   add('emergency','Reserva para imprevistos',P,'fundo de emergencia|emergencia|imprevistos|imprevisto|reserva|despesa inesperada','Uma reserva para imprevistos é dinheiro guardado para despesas inesperadas.','Deve poder ser usado quando necessário. O valor depende das despesas e das possibilidades da pessoa ou da família.','Uma avaria num equipamento necessário pode ser paga com uma reserva, se esta for suficiente.');
   add('little','Poupar com pouco dinheiro',P,'pouco dinheiro|nao consigo poupar|nao posso poupar|nao tenho dinheiro|dificil poupar|quanto devo poupar','Não existe uma quantia certa para todas as pessoas. Poupa apenas o que for possível depois das despesas essenciais.','Se o dinheiro mal chega para o necessário, pode não haver margem para poupar. Isso não é uma falha tua. Pequenas quantias ajudam quando forem possíveis.','Guardar 1 € por semana soma 52 € em 52 semanas, sem juros.');
   add('allowance','Exemplo com a mesada',P,'mesada|ines|exemplo de poupanca','A Inês recebe 20 € por mês. Guarda 5 € e fica com 15 € para gastar.','Ao fim de 12 meses, terá poupado 60 €, sem contar com juros. O hábito de guardar regularmente faz as pequenas quantias somarem-se.','5 € × 12 meses = 60 €.');
-  add('deposits','Guardar dinheiro e depósitos',P,'mealheiro|deposito|depositos|conta bancaria|onde guardar|onde poupar','Um mealheiro pode ajudar com pequenas quantias. Uma conta bancária permite guardar e acompanhar o dinheiro.','Um depósito é dinheiro colocado numa instituição bancária nas condições acordadas. Informa-te sobre comissões, remuneração e possibilidade de levantamento. Se fores menor, pede apoio a um adulto.','Separar o dinheiro para gastos do dinheiro para um objetivo facilita o acompanhamento.');
+  add('deposits','Guardar dinheiro e depósitos',P,'mealheiro|deposito|depositos|conta bancaria|onde guardar|onde poupar','Um mealheiro pode ajudar a separar pequenas quantias, mas não gera juros por si só. Uma conta bancária permite guardar e acompanhar o dinheiro; a remuneração depende das condições acordadas.','Um depósito é dinheiro colocado numa instituição bancária nas condições acordadas. Informa-te sobre comissões, remuneração e possibilidade de levantamento. Se fores menor, pede apoio a um adulto.','Separar o dinheiro para gastos do dinheiro para um objetivo facilita o acompanhamento.');
   add('saveinvest','Poupar e investir',P,'poupar e investir|investir|investimento financeiro|acoes|cripto|bitcoin','Poupar é reservar dinheiro. Investir é aplicar recursos esperando um retorno, com riscos que dependem da aplicação.','Um produto pode ter risco de perda e restrições de acesso ao dinheiro. Este guia explica os conceitos; não escolhe produtos financeiros por ti.','Guardar parte da mesada é poupar. Comprar ações é uma aplicação financeira com risco.');
   add('simpleinterest','Juros simples',P,'juros simples|juro simples','Nos juros simples, os juros são calculados sempre sobre o capital inicial.','A taxa e o tempo devem usar a mesma unidade: uma taxa anual combina com tempo em anos. Os exercícios do guia não incluem impostos ou comissões.','1 000 € a 3% ao ano durante 2 anos: juros = 1 000 × 0,03 × 2 = 60 €. Montante = 1 060 €.','J = C × i × t; montante = C + J. C: capital inicial; i: taxa decimal por período; t: períodos.');
   add('compoundinterest','Juros compostos',P,'juros compostos|juro composto|capitalizacao','Nos juros compostos, os juros de cada período são acrescentados ao capital e também passam a gerar juros.','A fórmula supõe taxa constante, capitalização uma vez por período e ausência de novos depósitos, impostos e comissões.','1 000 € a 3% ao ano durante 2 anos: 1 000 × 1,03² = 1 060,90 €.','Montante = C × (1 + i)^n. Juros = montante − C.');
@@ -85,5 +85,166 @@
   add('rights','Direitos humanos e economia',C,'direitos humanos|direitos sociais|trabalho digno|cidadania','As decisões económicas têm efeitos sobre direitos e condições de vida, como trabalho, saúde, educação e participação.','Analisar uma política exige observar quem beneficia, quem suporta custos e como os direitos são protegidos. Eficiência e direitos não são a mesma medida.','Avaliar uma cadeia de produção inclui considerar condições de trabalho, para além do preço final.');
   add('demography','Demografia e migrações',C,'demografia|migracoes|migracao|envelhecimento|populacao','A demografia estuda a população e a sua evolução. Migrações e envelhecimento influenciam trabalho, consumo e necessidades de serviços.','Os efeitos económicos dependem de qualificações, integração, instituições e condições locais. Não existe uma consequência única para todos os contextos.','O envelhecimento pode aumentar necessidades de cuidados e alterar a proporção entre população ativa e total.');
   add('tradepolicy','Livre comércio e protecionismo',C,'livre comercio|protecionismo|tarifas|barreiras comerciais','O livre comércio reduz barreiras às trocas. O protecionismo usa medidas como tarifas ou quotas para limitar concorrência externa.','A proteção pode favorecer alguns produtores, mas aumentar custos para consumidores e empresas que importam, além de gerar retaliação. É preciso analisar os efeitos distribuídos.','Uma tarifa sobre um bem importado pode aumentar o seu preço interno.');
+  // Perguntas práticas de poupança. As situações e quantias são exemplos educativos.
+  function faq(id,label,aliases,answer,detail,example,intents=[],exampleModel){
+    add(id,label,P,aliases,answer,detail,example);
+    Object.assign(topics[topics.length-1],{guide:true,intents,exampleModel});
+  }
+  faq('allowanceplan','Poupar com a mesada','poupar com a mesada|poupar a mesada|gerir a mesada|mesada para poupar',
+    'Quando recebes a mesada, separa primeiro o dinheiro necessário para despesas importantes. Depois escolhe uma pequena quantia para guardar e um limite para os outros gastos.',
+    'Dá um nome ao objetivo, guarda essa parte num local separado e acompanha quanto já juntaste. A quantia deve caber na tua mesada; não tem de ser igual à dos teus amigos.',
+    'Se recebes 30 € e precisas de gastar 20 €, ficam 10 € antes de escolheres quanto guardar e quanto reservar para outros gastos.',
+    [[/\bmesada\b/,/como|poup\w*|guardar|gerir|organizar|dividir|gastar/],[/sou (menor|crianca)|ainda estudo|tenho \d+ anos/,/poup\w*|guardar dinheiro/]],{kind:'budget',income:30,expense:20,planning:true});
+  faq('expenselog','Saber para onde vai o dinheiro','registar despesas|anotar gastos|acompanhar gastos|para onde vai o dinheiro|nao sei quanto gasto',
+    'Durante alguns dias, anota cada gasto, mesmo os pequenos. Regista a data, a quantia e aquilo em que gastaste.',
+    'No fim, agrupa os gastos, por exemplo em transporte, alimentação e lazer. Compara o total com o dinheiro que recebeste e procura despesas que possas alterar sem prejudicar necessidades importantes.',
+    'Uma nota com «segunda-feira: lanche» e a quantia paga já ajuda a identificar um hábito de consumo.',
+    [[/nao sei|saber|perceber|descobrir|onde|controlar|acompanhar|regist\w*|anot\w*/,/gasto|gastos|despesas|dinheiro vai|vai o dinheiro/],[/dinheiro desaparece|dinheiro acaba/,/nao sei|sem perceber/]]);
+  faq('envelopes','Separar dinheiro por finalidade','metodo dos envelopes|envelopes|separar dinheiro|tres mealheiros|dividir o dinheiro',
+    'Podes separar o dinheiro em partes com uma finalidade: despesas necessárias, gastos pessoais e poupança. Usa envelopes, mealheiros identificados ou um registo.',
+    'Escolhe os valores a partir do teu orçamento. Se uma parte acabar, revê o plano antes de retirar dinheiro de outro objetivo. Não existe uma divisão obrigatória para todas as pessoas.',
+    'Podes identificar um envelope como «transporte» e outro como «bicicleta», para não misturares o dinheiro dos dois.',
+    [[/separar|dividir|organizar/,/dinheiro|mesada|poupanca/],[/envelopes|mealheiros/]]);
+  faq('autosave','Criar uma rotina de poupança','poupanca automatica|automatizar poupanca|esqueco de poupar|lembrar de poupar|guardar quando recebo',
+    'Liga o hábito de poupar a um momento fixo, como o dia em que recebes dinheiro. Um lembrete e um registo simples ajudam a manter a rotina.',
+    'Se usares uma conta, uma transferência regular pode ajudar, desde que haja saldo suficiente e conheças as condições. Se fores menor, combina o método com um adulto responsável.',
+    'Podes marcar no calendário o dia da mesada e, nesse dia, separar a quantia que decidiste guardar.',
+    [[/esquec\w*|lembr\w*|automatic\w*|automatiz\w*|lembrete/,/poup\w*|guardar|dinheiro|mesada/],[/guardar|poupar/,/logo que recebo|quando recebo|dia em que recebo/]]);
+  faq('selfcontrol','Evitar gastar tudo','gasto tudo|gastar tudo|gasto sempre tudo|nao paro de gastar|nao consigo controlar os gastos',
+    'Experimenta separar a poupança antes dos gastos opcionais, definir um limite para estes gastos e esperar antes de uma compra que não tinhas planeado.',
+    'Descobre o que costuma levar-te a comprar: promoções, redes sociais, tédio ou vontade de acompanhar amigos. Reduz esses estímulos e revê o plano sem te culpares se falhares.',
+    'Se te apetecer comprar um jogo que não estava no plano, guarda a ideia e volta a decidir depois de comparar o preço com o teu objetivo.',
+    [[/gasto|gastar|gasta|gastei|gastando/,/tudo|todo o dinheiro|sem controlar|sem pensar/],[/nao consigo|nao paro|dificuldade/,/controlar.*gast|parar.*compr|resistir.*compr/]]);
+  faq('setbacks','Recomeçar depois de falhar','falhei a poupanca|gastei a poupanca|recomecar a poupar|falhar um mes|desisti de poupar',
+    'Uma falha não apaga o que aprendeste. Percebe o motivo, confirma o dinheiro que ainda tens e ajusta a quantia ou o prazo antes de recomeçar.',
+    'Não precisas de compensar uma falha com um esforço que prejudique despesas essenciais. Um plano mais pequeno e possível costuma ser mais fácil de manter.',
+    'Se não pudeste guardar num mês, podes prolongar o prazo do objetivo em vez de duplicar a quantia no mês seguinte.',
+    [[/falh\w*|desisti|desistir|recomec\w*|gastei|usei/,/poup\w*|dinheiro guardado|objetivo|meta/],[/nao (poupei|guardei)/,/mes|semana/]]);
+  faq('motivation','Manter a motivação','motivacao para poupar|manter a motivacao|nao desistir|poupar demora muito|poupanca demora',
+    'Escolhe um objetivo que faça sentido para ti e acompanha o progresso. Dividir uma meta grande em etapas ajuda a perceber que estás a avançar.',
+    'Podes usar uma barra desenhada ou uma lista de etapas. Evita comparar o teu ritmo com o de outras pessoas: rendimentos e despesas são diferentes.',
+    'Se a meta for uma bicicleta, assinala cada etapa alcançada e confirma se o prazo continua realista.',
+    [[/motiva\w*|desanim\w*|demora|lento|impaciente|nao desistir/,/poup\w*|juntar|guardar|objetivo|meta/]]);
+  faq('goaladjust','Ajustar uma meta difícil','meta impossivel|objetivo impossivel|nao consigo atingir a meta|prazo demasiado curto|plano realista',
+    'Se a quantia necessária por período não cabe no orçamento, muda uma das peças: prolonga o prazo, reduz o custo do objetivo ou revê despesas que possam ser alteradas.',
+    'Não deixes de pagar despesas essenciais para cumprir uma meta. Confirma também se já tens algum dinheiro guardado; isso reduz a parte que falta juntar.',
+    'Uma meta de 120 € em 6 meses exige 20 € por mês. Se o prazo passar para 12 meses, exige 10 € por mês, sem juros.',
+    [[/meta|objetivo|prazo|juntar/,/impossivel|nao consigo atingir|nao consigo cumprir|nao chega|demasiado curto|nao cabe|irrealista/]]);
+  faq('irregularincome','Poupar com rendimentos variáveis','rendimento irregular|rendimentos variaveis|mesada irregular|nao recebo todos os meses',
+    'Se o dinheiro que recebes varia, faz um plano prudente a partir dos valores que são mais certos. Evita assumir que todos os meses serão iguais ao melhor mês.',
+    'Quando receberes mais, podes reservar parte para meses com menos rendimento e para os teus objetivos. Revê o plano quando souberes quanto recebeste realmente.',
+    'Se recebes dinheiro apenas em algumas ocasiões, podes decidir o que fazer com cada quantia quando ela chega, sem prometer uma poupança mensal que talvez não consigas manter.',
+    [[/rendimento|rendimentos|recebo|mesada|salario|dinheiro/,/irregular|variavel|varia|diferente.*mes|nao.*todos os meses|so as vezes/]]);
+  faq('multiplegoals','Poupar para vários objetivos','varios objetivos|duas metas|dois objetivos|priorizar objetivos|qual objetivo primeiro',
+    'Ordena os objetivos por importância, urgência e custo. Distingue uma reserva para imprevistos das compras que podes planear.',
+    'Podes distribuir a quantia disponível por mais de uma meta, mas isso torna cada uma mais lenta. Se o dinheiro for pouco, concentrar-te numa prioridade pode facilitar o acompanhamento.',
+    'Comprar material escolar necessário pode ter prioridade sobre um jogo novo. São objetivos com urgências diferentes.',
+    [[/objetivos?|metas?|compras/,/varios|varias|duas|dois|ao mesmo tempo|prioriz\w*|primeiro/]]);
+  faq('giftmoney','Dinheiro recebido em presentes','dinheiro de aniversario|dinheiro do natal|dinheiro em presentes|recebi dinheiro de presente',
+    'Quando recebes dinheiro num presente, podes decidir uma parte para guardar e outra para usar agora. Faz essa escolha antes de começares a gastar.',
+    'Pensa no objetivo que já tens e nas despesas próximas. Um presente pode ajudar a avançar uma meta, mas não deve ser tratado como rendimento garantido todos os meses.',
+    'Se recebes um presente em dinheiro, podes reforçar o mealheiro da bicicleta e reservar outra parte para algo de que gostes.',
+    [[/dinheiro|recebi|recebo|poupar|guardar/,/aniversario|natal|presente|prenda/]]);
+  faq('leisure','Poupar e aproveitar o presente','poupar sem deixar de viver|poupar e divertir|poupar e lazer|tenho de deixar de comprar tudo',
+    'Poupar não significa eliminar tudo o que te dá prazer. O objetivo é equilibrar o que precisas, o que gostas de fazer e o que queres guardar para o futuro.',
+    'Depois das despesas necessárias, podes definir um limite para lazer que caiba no orçamento. Escolher de forma consciente é diferente de comprar sem limite.',
+    'Podes combinar um passeio económico com amigos e manter parte do dinheiro para um objetivo maior.',
+    [[/poup\w*|guardar dinheiro/,/divert\w*|lazer|deixar de viver|deixar de comprar tudo|nao comprar nada|aproveitar a vida/]]);
+  faq('budgetrule','A regra 50/30/20','regra 50 30 20|50 30 20|regra do orçamento',
+    'A regra 50/30/20 é um exemplo de divisão do rendimento: 50% para necessidades, 30% para desejos e 20% para poupança ou objetivos financeiros.',
+    'É uma referência para organizar um orçamento, não uma obrigação nem uma percentagem adequada a todas as pessoas. Se as despesas essenciais forem maiores, adapta a divisão às tuas possibilidades.',
+    'Num rendimento de 100 €, essa divisão ilustrativa corresponderia a 50 €, 30 € e 20 €. Isso não significa que tenhas de conseguir guardar 20 €.',
+    [[/50.*30.*20/]]);
+  faq('smallcosts','O efeito dos pequenos gastos','pequenos gastos|pequenas despesas|gastos repetidos|gastar em cafes|comprar todos os dias',
+    'Um gasto pequeno pode tornar-se significativo quando se repete. Multiplica o valor pela frequência para perceber o total e decidir se queres alterar esse hábito.',
+    'Distingue os gastos necessários dos que podes reduzir. A ideia é escolher com informação, sem cortar alimentação ou outras necessidades importantes.',
+    'Se conseguires guardar 2,50 € por semana em vez de gastar essa quantia, juntas 130 € em 52 semanas, sem juros.',
+    [[/pequen\w*|cafes|cafe|todos os dias|repetidos|repetidas/,/gastos?|despesas?|compr\w*/]],{kind:'periodic',amount:2.5,unit:'semana',time:52,timeUnit:'semana'});
+  faq('schoolsaving','Poupar na escola','poupar na escola|poupar nos lanches|poupar como estudante|e na escola',
+    'Na escola, podes planear lanches quando for possível, comparar material de que precisas e evitar compras só para acompanhar colegas.',
+    'Reutiliza material em bom estado e combina deslocações quando isso for adequado e seguro. Não saltes refeições nem deixes de comprar material necessário para poupar.',
+    'Antes de comprar cadernos novos, confirma se ainda tens cadernos utilizáveis do ano anterior.',
+    [[/escola|estudante|lanches|cantina|material escolar/,/poup\w*|economiz\w*|reduzir|gastar menos/]]);
+  faq('householdsaving','Poupar em casa','poupar em casa|economizar em casa|poupar no supermercado|e em casa',
+    'Em casa, ajuda a planear compras, faz uma lista e evita desperdícios. Compara o preço por unidade e compra apenas o que será realmente usado.',
+    'Rever serviços e subscrições pouco usados também pode ajudar. As decisões sobre contratos ou equipamentos devem ser combinadas com quem gere o orçamento da casa.',
+    'Uma embalagem maior não compensa se parte do produto acabar por ser desperdiçada.',
+    [[/casa|supermercado|compras de comida|agua|luz|eletricidade/,/poup\w*|economiz\w*|reduzir|gastar menos/]]);
+  faq('gaming','Poupar em jogos e compras digitais','compras nos jogos|skins|microtransacoes|poupar em jogos|gastar em jogos',
+    'Antes de comprar um jogo, uma skin ou outro extra digital, confirma o custo em euros e se a compra cabe no teu limite de lazer.',
+    'Muitas compras pequenas também se somam. Evita deixar pagamentos sem controlo e, se fores menor, combina as compras com um adulto responsável.',
+    'Moedas virtuais podem dificultar perceber quanto estás a gastar. Traduz o preço para dinheiro real antes de decidir.',
+    [[/jogos?|skins?|microtransac\w*|moedas virtuais/,/gastar|comprar|poup\w*|controlar|dinheiro/]]);
+  faq('subscriptions','Subscrições e pagamentos repetidos','subscricoes|assinaturas|pagamentos recorrentes|renovacao automatica|subscricao gratis',
+    'Revê os serviços que pagas regularmente e confirma quais usas realmente. Verifica o preço, a renovação automática e as condições de cancelamento.',
+    'Uma experiência gratuita pode passar a ser paga. Anota a data em que termina e lê as condições antes de aderir.',
+    'Antes de aderir a outro serviço, confirma se já pagas por um serviço semelhante que pouco usas.',
+    [[/subscric\w*|assinatur\w*|renovacao automatica|experiencia gratuita/]]);
+  faq('pricecompare','Comparar preços e promoções','comparar precos|preco por unidade|promocao compensa|desconto compensa|mais barato compensa',
+    'Compara o preço final, a quantidade, a qualidade e eventuais portes ou outros custos. O preço por unidade ajuda a comparar embalagens de tamanhos diferentes.',
+    'Um desconto só ajuda o teu orçamento se o produto for necessário ou estiver no teu plano. Gastar menos do que o preço anunciado não transforma uma compra desnecessária em poupança.',
+    'Um artigo com preço mais baixo pode sair mais caro se os portes fizerem o custo final ultrapassar o de outra opção.',
+    [[/compar\w*|compensa|vale a pena|mais barato|bom negocio/,/precos?|promoc\w*|descont\w*|comprar|embalagem/],[/preco por unidade/]]);
+  faq('repairreuse','Reparar e reutilizar','reparar ou comprar|reutilizar para poupar|comprar em segunda mao|comprar usado',
+    'Antes de substituir um objeto, vê se podes continuar a usá-lo, repará-lo ou encontrar uma opção em segunda mão que seja adequada.',
+    'Compara o custo total, o estado, a segurança e a duração esperada. Uma opção usada ou uma reparação não são sempre a melhor escolha; depende das condições.',
+    'Uma mochila em bom estado pode continuar a servir, mesmo que uma nova esteja em promoção.',
+    [[/repar\w*|reutiliz\w*|segunda mao|comprar usado/,/poup\w*|comprar|compensa|barato|dinheiro/]]);
+  faq('annualexpenses','Preparar despesas que já sabes que virão','despesas anuais|despesas previstas|gastos previstos|poupar para ferias|poupar para material escolar',
+    'Uma despesa que já sabes que vai acontecer pode ser preparada com antecedência. Calcula quanto falta juntar e divide pelo tempo disponível.',
+    'Guarda essa quantia à parte e inclui-a no orçamento. Férias, material escolar e pagamentos anuais planeados são diferentes de um imprevisto.',
+    'Para preparar uma despesa de 120 € daqui a 12 meses, podes planear 10 € por mês, sem juros.',
+    [[/despesas?|pagamentos?|gastos?/,/anuais|anual|previst\w*|planead\w*/],[/poup\w*|guardar|preparar/,/ferias|material escolar|inicio das aulas/]],{kind:'goal',target:120,time:12,timeUnit:'mes',initial:0});
+  faq('emergencygoal','Reserva de emergência ou objetivo de compra','reserva ou objetivo|emergencia ou compra|reserva e objetivo|diferenca entre reserva e objetivo',
+    'Uma reserva para imprevistos serve para necessidades inesperadas. A poupança para uma compra serve para algo que consegues planear.',
+    'Separar as duas finalidades ajuda a não gastar a reserva numa compra opcional. A forma de distribuir o dinheiro depende das despesas importantes e do que é possível guardar.',
+    'A reparação inesperada de um equipamento necessário é diferente de juntar dinheiro para um jogo novo.',
+    [[/reserva|emergencia|imprevistos/,/objetivo|compra|ferias|diferenca|prioridade/]]);
+  faq('usesavings','Quando usar o dinheiro guardado','usar a poupanca|levantar a poupanca|mexer na poupanca|preciso do dinheiro guardado',
+    'O dinheiro guardado tem uma finalidade: pode ser usado quando essa finalidade chegar ou quando houver uma necessidade importante que obrigue a rever o plano.',
+    'Se usares uma reserva num imprevisto, revê depois como a podes recompor. Se for uma compra opcional, pensa no que muda no teu objetivo antes de retirar o dinheiro.',
+    'Usar a reserva para uma reparação necessária não é falhar o objetivo da reserva; é uma das razões para a ter.',
+    [[/usar|levantar|mexer|retirar|preciso/,/poupanca|dinheiro guardado|reserva/]]);
+  faq('inflationsaving','Poupança e poder de compra','poupanca perde valor|inflacao e poupanca|dinheiro guardado perde valor',
+    'O dinheiro guardado pode manter a mesma quantia em euros e, ainda assim, comprar menos se os preços aumentarem. Esse é o efeito da inflação no poder de compra.',
+    'Receber juros não garante, por si só, que o poder de compra aumente: contam também a inflação e os custos. Dinheiro para necessidades próximas e aplicações com risco têm finalidades diferentes.',
+    'Se um cabaz custa 100 € e passa a custar 105 €, ter os mesmos 100 € já não chega para o comprar.',
+    [[/poupanca|dinheiro guardado|poupar/,/inflacao|perde valor|perder valor|poder de compra/]]);
+  faq('savingsmyth','Poupar é só para quem tem muito dinheiro?','so os ricos poupam|so ricos podem poupar|poupar e ser avarento|poupar e nao gastar',
+    'Poupar não exige ser rico nem significa recusar todas as compras. Significa reservar dinheiro quando existe margem, dando prioridade às necessidades importantes.',
+    'Quem tem rendimentos muito baixos pode não conseguir guardar dinheiro. O valor da poupança não mede a responsabilidade ou o valor de uma pessoa.',
+    'Guardar uma pequena quantia possível é um hábito de poupança; não conseguir guardar num mês difícil não é uma falha pessoal.',
+    [[/poup\w*|guardar/,/so.*ricos|ser rico|preciso.*muito dinheiro|avarento|sovina|nao gastar nada/]]);
+  faq('savingmistakes','Erros comuns ao tentar poupar','erros ao poupar|erros de poupanca|o que evitar ao poupar',
+    'Alguns erros comuns são escolher uma meta que não cabe no orçamento, esquecer gastos pequenos, misturar a poupança com o dinheiro do dia a dia e desistir depois de uma falha.',
+    'Evita contar com dinheiro que ainda não é certo ou achar que uma promoção compensa sempre. Revê o plano e faz mudanças pequenas que consigas manter.',
+    'Um plano que depende de gastar menos do que precisas para alimentação ou transporte deve ser ajustado.',
+    [[/erros?|evitar|nao fazer|fazer mal/,/poup\w*|guardar dinheiro/]]);
+  faq('savingsecurity','Proteger o dinheiro e evitar propostas suspeitas','dinheiro facil|duplicar dinheiro|lucro garantido|esquemas|proteger a poupanca',
+    'Desconfia de propostas que prometem muito dinheiro rapidamente, pressionam para decidir já ou pedem códigos e dados de acesso. Para poupar, não precisas de aceitar uma promessa de enriquecimento rápido.',
+    'Confirma a identidade e as condições por canais oficiais antes de pagar ou partilhar dados. Se fores menor ou tiveres dúvidas, pede apoio a um adulto responsável.',
+    'Uma mensagem que pede um pagamento para «duplicar a tua poupança» deve levar-te a parar e verificar, em vez de enviar dinheiro.',
+    [[/duplicar|dobrar|garantid\w*|esquemas?|burla|fraude|dinheiro facil/,/dinheiro|poupanca|lucro|ganhar|retorno|proteger/]]);
+
+  faq('savingfrequency','Com que frequência poupar?','poupar todos os dias|poupar todas as semanas|poupar todos os meses|frequencia de poupanca',
+    'Não tens de guardar dinheiro todos os dias. Escolhe uma frequência que combine com a forma como recebes dinheiro e com as tuas despesas.',
+    'Pode ser mais simples guardar uma quantia quando recebes a mesada ou rever a poupança semanalmente. A regularidade deve ser possível de manter, não uma obrigação de poupar a qualquer custo.',
+    'Se recebes a mesada uma vez por mês, podes separar a poupança nesse dia, em vez de tentar guardar todos os dias.',
+    [[/poupar|guardar/,/frequencia|quantas vezes|todos os dias|todas as semanas|todos os meses|diariamente|semanalmente|mensalmente/]]);
+  faq('spendless','Gastar menos e poupar','poupar e economizar|gastar menos e poupar|economizar e poupar|reduzir gastos e poupar',
+    'Na linguagem do dia a dia, poupar e economizar podem ter o mesmo sentido. Mas reduzir uma despesa só aumenta o dinheiro guardado se não gastares essa diferença noutra coisa.',
+    'Distingue a redução de um custo da poupança acumulada. Se quiseres usar a diferença para um objetivo, separa-a ou regista-a como dinheiro guardado.',
+    'Se evitas uma compra e depois gastas essa quantia noutro artigo, não aumentaste a poupança guardada.',
+    [[/poupar|poupanca/,/economizar|gastar menos|reduzir gastos/,/diferenca|mesma coisa|igual|e /]]);
+
+  // Combinações de ideias reconhecem perguntas naturais sem depender de uma frase exata.
+  function extend(id,intents){topics.find(t=>t.id===id).intents=intents;}
+  extend('saving',[[/o que|significa|definicao|explica/,/poupanca|poupar|economizar/]]);
+  extend('habits',[[/melhorar/,/poup\w*/],[/comec\w*|inicio|primeiro passo|por onde/,/poup\w*|guardar dinheiro/],[/criar|melhorar|ganhar/,/habit\w*|rotina.*poup/],[/ajuda me|ajuda|dicas|conselhos/,/poup\w*|guardar dinheiro/]]);
+  extend('little',[[/quanto/,/devo|posso|consigo|preciso/,/poupar|guardar/],[/poup\w*|guardar\b/,/ganho pouco|recebo pouco|pouco dinheiro|nao tenho rendimento|nao trabalho|sou pobre|nao consigo|nao posso|dinheiro nao chega|so tenho|guardar so|poupar so|apenas|vale a pena/]]);
+  extend('importance',[[/^(?:e )?(?:porque|por que)\b|vantag\w*|benefic\w*|importan\w*/,/poupar|poupanca/]]);
+  extend('deposits',[[/onde|local|mealheiro/,/poupanca|guardar|guardo|dinheiro/]]);
+  extend('impulse',[[/compr\w*|gast\w*/,/impulso|impulsiv\w*|sem pensar|vontade de comprar/]]);
+
   root.SavingsKnowledge=Object.freeze(topics.map(t=>Object.freeze(t)));
 })(typeof window!=='undefined'?window:globalThis);
