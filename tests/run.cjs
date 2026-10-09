@@ -4,3 +4,5 @@ require('./ui.test.cjs');
 require('./conversation.test.cjs');
 
 require('./savings.test.cjs');
+
+require('./intelligence.test.cjs');

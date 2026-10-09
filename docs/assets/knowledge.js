@@ -246,5 +246,1028 @@
   extend('deposits',[[/onde|local|mealheiro/,/poupanca|guardar|guardo|dinheiro/]]);
   extend('impulse',[[/compr\w*|gast\w*/,/impulso|impulsiv\w*|sem pensar|vontade de comprar/]]);
 
+  // Conteúdos redigidos a partir do texto de estudo enviado pelos autores (45 páginas).
+  // sourcePages remete para as páginas desse documento; não são dados de mercado atuais.
+  const expanded=[
+  {
+    "id": "flowstock",
+    "label": "Poupança, saldo e património",
+    "category": "Poupança",
+    "aliases": [
+      "poupanca e saldo",
+      "poupanca e patrimonio",
+      "fluxo e stock",
+      "saldo bancario",
+      "dinheiro acumulado"
+    ],
+    "answer": "A poupança é o que não consumiste do rendimento durante um período. O saldo é o dinheiro numa conta num determinado momento: pode incluir poupança antiga, empréstimos ou dinheiro de uma venda.",
+    "detail": "Para saber quanto poupaste este mês, compara o rendimento disponível e o consumo desse mês. Ter 1000 € na conta não significa ter poupado 1000 € este mês.",
+    "example": "Recebes 1800 € e consomes 1500 € no mês: poupas 300 €. Um saldo de 5000 € pode incluir dinheiro guardado em anos anteriores.",
+    "formula": "Poupança do período = rendimento disponível − consumo.",
+    "patterns": [
+      [
+        "poupanca|poupei|poupado",
+        "saldo|patrimonio|stock|acumulado|(?:na|da|numa|minha|uma) conta",
+        "diferenca|igual|mesma|significa|conta|o que"
+      ]
+    ],
+    "sourcePages": [
+      1,
+      2
+    ],
+    "priority": 12,
+    "guide": false,
+    "exampleModel": {
+      "kind": "budget",
+      "income": 1800,
+      "expense": 1500
+    }
+  },
+  {
+    "id": "netwealth",
+    "label": "Património líquido",
+    "category": "Poupança",
+    "aliases": [
+      "patrimonio liquido",
+      "riqueza liquida",
+      "ativos e dividas"
+    ],
+    "answer": "O património líquido é o valor do que possuis menos o que deves. A poupança pode ajudá-lo a crescer, mas os preços dos bens e as dívidas também o alteram.",
+    "detail": "Uma casa pode valorizar sem teres poupado esse valor. E podes poupar num mês e ver o património diminuir se um ativo perder valor.",
+    "example": "Ativos de 5000 € e dívidas de 2000 € correspondem a um património líquido de 3000 €.",
+    "formula": "Património líquido = ativos − dívidas.",
+    "patterns": [
+      [
+        "patrimonio|riqueza",
+        "liquido|dividas|calcular|valorizar|aumenta"
+      ]
+    ],
+    "sourcePages": [
+      2
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "disposableincome",
+    "label": "Que rendimento usar para poupar?",
+    "category": "Poupança",
+    "aliases": [
+      "salario bruto ou liquido",
+      "rendimento depois dos descontos",
+      "rendimento disponivel"
+    ],
+    "answer": "Usa o rendimento disponível: o dinheiro que fica depois dos descontos obrigatórios, acrescentando os outros rendimentos e transferências que recebeste no período.",
+    "detail": "O salário bruto pode incluir dinheiro que não chega a ficar disponível. No orçamento, separa rendimentos certos de valores incertos e não contes uma transferência entre contas tuas como um novo rendimento.",
+    "example": "Se o salário bruto é 1200 € e os descontos são 200 €, ficam 1000 € antes de considerar outros rendimentos.",
+    "formula": "",
+    "patterns": [
+      [
+        "bruto|liquido|descontos",
+        "salario|rendimento|recebo|poup"
+      ],
+      [
+        "o que|significa|calcular",
+        "rendimento disponivel"
+      ]
+    ],
+    "sourcePages": [
+      3
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "negativesaving",
+    "label": "Poupança negativa e despoupança",
+    "category": "Poupança",
+    "aliases": [
+      "despoupanca",
+      "poupanca negativa",
+      "gastar mais do que recebo"
+    ],
+    "answer": "A poupança é negativa quando o consumo do período supera o rendimento disponível. A diferença pode ser paga com reservas anteriores ou dinheiro emprestado.",
+    "detail": "Isto pode acontecer numa emergência, durante desemprego ou ao usar reservas para a reforma. Primeiro, identifica o motivo e o período; não significa automaticamente falta de organização.",
+    "example": "Rendimento de 1400 € e consumo de 1600 €: poupança de −200 €.",
+    "formula": "S = rendimento disponível − consumo.",
+    "patterns": [
+      [
+        "despoupanca|poupanca negativa"
+      ],
+      [
+        "gasto|gastar|despesas|consumo",
+        "mais.*recebo|superior.*rendimento|ultrapassa.*rendimento"
+      ]
+    ],
+    "sourcePages": [
+      5
+    ],
+    "priority": 12,
+    "guide": false,
+    "exampleModel": {
+      "kind": "budget",
+      "income": 1400,
+      "expense": 1600
+    }
+  },
+  {
+    "id": "zerosaving",
+    "label": "Quando não sobra dinheiro",
+    "category": "Poupança",
+    "aliases": [
+      "poupanca nula",
+      "saldo zero",
+      "nao sobra nada"
+    ],
+    "answer": "A poupança é nula quando o rendimento disponível e o consumo são iguais. Se as necessidades essenciais absorvem o rendimento, não tens de cortar o necessário para conseguir uma percentagem de poupança.",
+    "detail": "Regista os valores, verifica se existem gastos ajustáveis e revê o plano quando a situação mudar. Um orçamento organizado não cria rendimento que não existe.",
+    "example": "Receber 1000 € e consumir 1000 € deixa uma poupança de 0 €.",
+    "formula": "",
+    "patterns": [
+      [
+        "poupanca nula|saldo zero|nao sobra nada|nao me sobra dinheiro"
+      ]
+    ],
+    "sourcePages": [
+      5,
+      10
+    ],
+    "priority": 12,
+    "guide": true
+  },
+  {
+    "id": "savingfactors",
+    "label": "O que influencia a capacidade de poupar?",
+    "category": "Poupança",
+    "aliases": [
+      "determinantes da poupanca",
+      "fatores da poupanca",
+      "porque umas pessoas poupam mais"
+    ],
+    "answer": "A capacidade de poupar depende do rendimento, das despesas essenciais, da estabilidade do emprego, dos dependentes e dos objetivos. Os hábitos contam, mas as condições de partida também.",
+    "detail": "Duas pessoas com o mesmo salário podem ter despesas de habitação e responsabilidades diferentes. Uma taxa de poupança maior não prova que alguém é mais responsável.",
+    "example": "Quem paga renda e sustenta dependentes pode ter menos margem do que quem recebe o mesmo e partilha esses custos.",
+    "formula": "",
+    "patterns": [
+      [
+        "fatores|determinantes|influencia|depende de",
+        "poupanca|poupar"
+      ],
+      [
+        "porque|por que",
+        "pessoas|familias",
+        "mais|menos",
+        "poup"
+      ]
+    ],
+    "sourcePages": [
+      6,
+      11,
+      39
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "incomerise",
+    "label": "Ganhar mais não garante poupar mais",
+    "category": "Poupança",
+    "aliases": [
+      "aumento de salario",
+      "rendimento sobe",
+      "ganhar mais e poupar menos"
+    ],
+    "answer": "Ganhar mais só aumenta a poupança se o consumo não aumentar ainda mais. A diferença entre rendimento e consumo continua a ser o que interessa.",
+    "detail": "A taxa de poupança também pode diminuir mesmo quando guardas mais euros, se o rendimento aumentar proporcionalmente mais.",
+    "example": "Antes: 1800 € recebidos e 1500 € consumidos, poupança de 300 €. Depois: 1900 € recebidos e 1650 € consumidos, poupança de 250 €.",
+    "formula": "",
+    "patterns": [
+      [
+        "salario|rendimento|ganhar|receber",
+        "aument|mais|sub",
+        "poup"
+      ]
+    ],
+    "sourcePages": [
+      4,
+      43
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "mentalaccounting",
+    "label": "Separar dinheiro sem perder a visão do orçamento",
+    "category": "Poupança",
+    "aliases": [
+      "contabilidade mental",
+      "dinheiro de premios",
+      "etiquetas no dinheiro"
+    ],
+    "answer": "Separar dinheiro por objetivos ajuda a organizar. Mas todas as parcelas pertencem ao mesmo orçamento: o dinheiro de um prémio também é dinheiro teu e tem um custo de oportunidade.",
+    "detail": "Evita tratar dinheiro recebido de surpresa como se não contasse. Olha para os gastos, reservas e dívidas em conjunto, mesmo que uses envelopes ou contas diferentes.",
+    "example": "Ter um envelope para férias e uma dívida com custos elevados exige olhar para ambos, em vez de analisar só o envelope.",
+    "formula": "",
+    "patterns": [
+      [
+        "contabilidade mental|etiquetas no dinheiro"
+      ],
+      [
+        "premio|bonus",
+        "gastar|conta|dinheiro"
+      ]
+    ],
+    "sourcePages": [
+      10
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "presentbias",
+    "label": "Porque custa adiar uma compra?",
+    "category": "Poupança",
+    "aliases": [
+      "preferencia temporal",
+      "enviesamento para o presente",
+      "procrastinacao"
+    ],
+    "answer": "Uma compra traz uma satisfação imediata, enquanto a vantagem de poupar pode parecer distante. Essa diferença ajuda a explicar a vontade de gastar mesmo quando tens uma meta.",
+    "detail": "Torna o objetivo visível, define limites antes de comprar e cria uma pausa entre a vontade e a decisão. Não precisas de eliminar todo o lazer.",
+    "example": "Quando queres comprar algo fora do plano, esperar e rever o objetivo pode tornar a escolha mais consciente.",
+    "formula": "",
+    "patterns": [
+      [
+        "preferencia temporal|enviesamento|procrastinacao"
+      ],
+      [
+        "custa|dificil|adiar|esperar",
+        "comprar|compra|consumo"
+      ]
+    ],
+    "sourcePages": [
+      7,
+      10
+    ],
+    "priority": 12,
+    "guide": true
+  },
+  {
+    "id": "retirementsaving",
+    "label": "Poupar para fases futuras da vida",
+    "category": "Poupança",
+    "aliases": [
+      "poupar para a reforma",
+      "poupanca na reforma",
+      "poupanca ao longo da vida"
+    ],
+    "answer": "Poupar pode preparar fases em que o rendimento diminui, como a reforma. Também pode haver fases em que usas reservas, por exemplo durante formação ou desemprego.",
+    "detail": "O objetivo e o prazo devem considerar os rendimentos esperados, as necessidades e a incerteza. Usar uma reserva para a finalidade prevista não significa que a poupança falhou.",
+    "example": "Uma pessoa pode poupar durante a vida ativa e usar parte desse dinheiro depois de deixar de trabalhar.",
+    "formula": "",
+    "patterns": [
+      [
+        "reforma|vida ativa|ciclo de vida",
+        "poup|reserv|dinheiro"
+      ]
+    ],
+    "sourcePages": [
+      7,
+      8,
+      32
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "savingautonomy",
+    "label": "Poupança e autonomia",
+    "category": "Poupança",
+    "aliases": [
+      "autonomia financeira",
+      "independencia financeira",
+      "liberdade financeira"
+    ],
+    "answer": "Uma reserva pode dar mais margem para enfrentar mudanças, apoiar alguém ou escolher com menos pressão. Não garante independência total nem resolve todas as dificuldades.",
+    "detail": "O valor da poupança está nas possibilidades que cria. Define o que autonomia significa para ti e começa por um objetivo concreto que caiba no orçamento.",
+    "example": "Dinheiro reservado pode ajudar a suportar uma mudança profissional ou uma reparação urgente.",
+    "formula": "",
+    "patterns": [
+      [
+        "autonomia|independencia|liberdade",
+        "financeira|poup|dinheiro"
+      ]
+    ],
+    "sourcePages": [
+      8,
+      44
+    ],
+    "priority": 12,
+    "guide": true
+  },
+  {
+    "id": "hoarding",
+    "label": "Entesouramento e dinheiro parado",
+    "category": "Poupança",
+    "aliases": [
+      "entesouramento",
+      "dinheiro debaixo do colchao",
+      "notas em casa",
+      "dinheiro parado"
+    ],
+    "answer": "Entesourar é guardar moeda sem a aplicar numa forma remunerada, por exemplo conservar notas. Continua a ser dinheiro disponível, mas não gera juros por si só.",
+    "detail": "Considera a segurança física e a inflação: o número de euros pode ficar igual e o poder de compra diminuir. Guardar dinheiro e conservar o seu valor real são coisas diferentes.",
+    "example": "100 € num mealheiro continuam a ser 100 €, mas podem comprar menos se os preços subirem.",
+    "formula": "",
+    "patterns": [
+      [
+        "entesouramento|colchao|dinheiro parado|notas em casa"
+      ]
+    ],
+    "sourcePages": [
+      11,
+      13
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "deposittypes",
+    "label": "Depósito à ordem e a prazo",
+    "category": "Poupança",
+    "aliases": [
+      "deposito a ordem",
+      "deposito a prazo",
+      "ordem e prazo"
+    ],
+    "answer": "Um depósito à ordem serve normalmente para pagamentos e levantamentos. Um depósito a prazo tem condições de duração e remuneração acordadas.",
+    "detail": "Para comparar, vê o prazo, os custos, quando os juros são pagos e se podes levantar antes do fim. O nome do produto e a taxa anunciada não chegam para conhecer todas as condições.",
+    "example": "O dinheiro de uma despesa próxima precisa de condições de acesso diferentes do de um objetivo distante.",
+    "formula": "",
+    "patterns": [
+      [
+        "deposito|depositos|conta",
+        "a ordem|a prazo"
+      ],
+      [
+        "ordem e prazo"
+      ]
+    ],
+    "sourcePages": [
+      11,
+      12
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "earlywithdrawal",
+    "label": "Levantar uma poupança antes do prazo",
+    "category": "Poupança",
+    "aliases": [
+      "mobilizacao antecipada",
+      "levantar antes do prazo",
+      "retirar deposito"
+    ],
+    "answer": "A possibilidade de retirar dinheiro antes do vencimento depende das condições do produto. Pode existir perda de juros, custos ou restrições.",
+    "detail": "Confirma o contrato e as condições de mobilização. Se o dinheiro pode fazer falta para um imprevisto, a facilidade de acesso é uma parte importante da análise.",
+    "example": "Um produto pode permitir levantar o capital mas retirar parte dos juros previstos; outro pode ter condições diferentes.",
+    "formula": "",
+    "patterns": [
+      [
+        "levantar|retirar|mobilizar|mexer",
+        "antes|antecipad|prazo|deposito"
+      ]
+    ],
+    "sourcePages": [
+      12
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "nominalreal",
+    "label": "Valor nominal e poder de compra",
+    "category": "Poupança",
+    "aliases": [
+      "valor nominal e real",
+      "valor real",
+      "poder de compra da poupanca"
+    ],
+    "answer": "O valor nominal é o número de euros. O valor real mostra o que esses euros conseguem comprar. Com inflação, manter o mesmo saldo pode significar perder poder de compra.",
+    "detail": "Para um período, divide o montante nominal por 1 mais a inflação em forma decimal. É uma comparação a preços do início do período, não uma previsão de preços.",
+    "example": "1000 € com inflação de 5% equivalem a cerca de 952,38 € a preços anteriores.",
+    "formula": "Valor real = valor nominal ÷ (1 + inflação)^n.",
+    "patterns": [
+      [
+        "valor nominal|valor real"
+      ],
+      [
+        "poder de compra",
+        "calcular|quanto|1000|equivale"
+      ]
+    ],
+    "sourcePages": [
+      13,
+      14
+    ],
+    "priority": 12,
+    "guide": false,
+    "exampleModel": {
+      "kind": "realvalue",
+      "capital": 1000,
+      "inflationRate": 5,
+      "time": 1,
+      "timeUnit": "ano"
+    }
+  },
+  {
+    "id": "realinterest",
+    "label": "Taxa de juro real",
+    "category": "Poupança",
+    "aliases": [
+      "juro real",
+      "taxa real",
+      "juros e inflacao"
+    ],
+    "answer": "A taxa de juro real compara a remuneração com a inflação. Ganhar juros não garante aumentar o poder de compra.",
+    "detail": "Para o mesmo período: taxa real = (1 + taxa nominal) ÷ (1 + inflação) − 1. Subtrair inflação aos juros é apenas uma aproximação.",
+    "example": "Juro nominal de 3% e inflação de 5% dão uma taxa real de cerca de −1,90%, antes de impostos e custos.",
+    "formula": "r = (1 + i) ÷ (1 + π) − 1.",
+    "patterns": [
+      [
+        "juro|juros|taxa|remuneracao",
+        "real|inflacao",
+        "diferenca|taxa|calcular|perco|ganho|compensa"
+      ]
+    ],
+    "sourcePages": [
+      14
+    ],
+    "priority": 12,
+    "guide": false,
+    "exampleModel": {
+      "kind": "realrate",
+      "rate": 3,
+      "inflationRate": 5
+    }
+  },
+  {
+    "id": "netreturn",
+    "label": "Rendimento bruto, líquido e custos",
+    "category": "Poupança",
+    "aliases": [
+      "juros liquidos",
+      "rendimento liquido de uma aplicacao",
+      "comissoes e juros",
+      "rentabilidade liquida"
+    ],
+    "answer": "O rendimento bruto é o ganho antes de deduções. O rendimento líquido considera os impostos e custos aplicáveis: uma taxa anunciada não é necessariamente o que vais receber.",
+    "detail": "Usa as condições do produto e do titular, sem assumir uma taxa de imposto universal. Compara resultados no mesmo prazo e com os mesmos custos incluídos.",
+    "example": "30 € de ganho bruto menos 6 € de custos deixam 24 €, antes de outras deduções.",
+    "formula": "Ganho após deduções indicadas = ganho bruto − impostos indicados − custos.",
+    "patterns": [
+      [
+        "liquido|liquidos|liquida|custos|comissoes|impostos",
+        "juros|rentabilidade|remuneracao|aplicacao|ganho"
+      ]
+    ],
+    "sourcePages": [
+      14
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "contributioninterest",
+    "label": "Depósitos regulares com juros",
+    "category": "Poupança",
+    "aliases": [
+      "reforcos com juros",
+      "depositos mensais com juros",
+      "poupar com juros"
+    ],
+    "answer": "Quando fazes reforços, cada depósito rende durante um tempo diferente. É preciso saber a taxa, a frequência de capitalização e se o reforço entra no início ou no fim do período.",
+    "detail": "Um reforço no início do mês rende mais tempo do que o mesmo reforço no fim. O cálculo deve separar o dinheiro que depositaste dos juros gerados.",
+    "example": "Guardar 100 € no fim de cada mês durante 12 meses, com taxa efetiva anual hipotética de 3% e capitalização mensal equivalente, dá cerca de 1216,41 €, sem custos.",
+    "formula": "Saldo seguinte = saldo anterior × (1 + taxa por período) + reforço no fim do período.",
+    "patterns": [
+      [
+        "juros|remuneracao",
+        "reforcos|depositos mensais|por mes|mensal",
+        "poup|guard|deposit|reforc"
+      ]
+    ],
+    "sourcePages": [
+      13
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "diversification",
+    "label": "Diversificar uma aplicação da poupança",
+    "category": "Poupança",
+    "aliases": [
+      "diversificacao",
+      "diversificar",
+      "nao por os ovos no mesmo cesto"
+    ],
+    "answer": "Diversificar é distribuir aplicações para diminuir a exposição a um único problema. Ter vários produtos semelhantes não significa necessariamente diversificar.",
+    "detail": "Pode reduzir certos riscos, mas não elimina perdas nem garante rentabilidade. Interessa perceber em que ativos, setores e entidades o dinheiro está aplicado.",
+    "example": "Vários produtos dependentes da mesma empresa podem continuar expostos ao mesmo acontecimento.",
+    "formula": "",
+    "patterns": [
+      [
+        "diversific|ovos no mesmo cesto"
+      ]
+    ],
+    "sourcePages": [
+      15,
+      16
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "savinghorizon",
+    "label": "Prazo do objetivo e acesso ao dinheiro",
+    "category": "Poupança",
+    "aliases": [
+      "horizonte temporal",
+      "curto prazo",
+      "longo prazo",
+      "prazo da poupanca"
+    ],
+    "answer": "O horizonte temporal é o tempo até precisares do dinheiro. Uma compra próxima e um objetivo distante pedem análises diferentes de acesso, custos e risco.",
+    "detail": "Sentires-te confortável com risco não significa conseguires suportar perder dinheiro essencial. Relaciona o prazo e a função da reserva com as condições da aplicação.",
+    "example": "Dinheiro para uma despesa no próximo mês precisa de estar disponível a tempo.",
+    "formula": "",
+    "patterns": [
+      [
+        "horizonte temporal|prazo da poupanca"
+      ],
+      [
+        "curto prazo|longo prazo",
+        "poup|dinheiro|objetivo"
+      ]
+    ],
+    "sourcePages": [
+      12
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "debtandsaving",
+    "label": "Poupar quando existem dívidas",
+    "category": "Poupança",
+    "aliases": [
+      "poupar ou pagar dividas",
+      "poupar com dividas",
+      "amortizar e poupar"
+    ],
+    "answer": "Uma dívida cria pagamentos futuros e pode reduzir a margem para poupar. Para comparar guardar dinheiro e amortizar, vê os custos da dívida, as condições de amortização e as necessidades de uma reserva.",
+    "detail": "Pagar capital reduz o que deves; pagar juros é um custo. Uma transferência entre contas tuas não é consumo nem nova poupança. Evita decidir apenas pela taxa anunciada de uma aplicação.",
+    "example": "Se uma poupança mensal de 360 € financia 250 € de amortização de capital, só 110 € ficam em dinheiro, mas a dívida também diminui.",
+    "formula": "",
+    "patterns": [
+      [
+        "poup|guardar|reserva",
+        "divida|dividas|amortizar|credito",
+        "como|devo|ou|com|antes|vale|diferenca"
+      ]
+    ],
+    "sourcePages": [
+      9,
+      42,
+      43
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "timeunits",
+    "label": "Usar o mesmo período nas contas",
+    "category": "Poupança",
+    "aliases": [
+      "mensal e anual",
+      "unidades de tempo",
+      "periodos comparaveis"
+    ],
+    "answer": "Compara rendimento e despesas do mesmo período. Não subtraias diretamente uma despesa anual a um salário mensal.",
+    "detail": "Uma despesa anual previsível pode ser dividida por 12 para planear uma reserva mensal. Isso não altera a data em que a conta precisa de ser paga.",
+    "example": "Uma despesa de 600 € por ano pode ser preparada com 50 € por mês, se houver 12 meses até ao pagamento.",
+    "formula": "Reserva mensal = despesa anual ÷ 12.",
+    "patterns": [
+      [
+        "mensal e anual|unidades de tempo|periodos comparaveis"
+      ],
+      [
+        "rendimento|despesas",
+        "mensal|por mes",
+        "anual|por ano"
+      ]
+    ],
+    "sourcePages": [
+      5,
+      9
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "emergencyamount",
+    "label": "Dimensionar uma reserva para imprevistos",
+    "category": "Poupança",
+    "aliases": [
+      "quanto ter de reserva",
+      "quantos meses de reserva",
+      "tamanho do fundo de emergencia"
+    ],
+    "answer": "Não há um valor de reserva certo para todas as pessoas. Parte das despesas necessárias, da estabilidade do rendimento e dos imprevistos que precisas de conseguir suportar.",
+    "detail": "Podes simular uma reserva que cubra um número de meses escolhido por ti: despesas mensais × meses de cobertura. Depois compara essa meta com a tua margem para guardar.",
+    "example": "600 € de despesas necessárias por mês e uma cobertura escolhida de 3 meses correspondem a 1800 €.",
+    "formula": "Meta da reserva = despesas mensais essenciais × meses de cobertura.",
+    "patterns": [
+      [
+        "reserva|fundo de emergencia",
+        "quanto|quantos|tamanho|valor|meses|cobrir"
+      ]
+    ],
+    "sourcePages": [
+      7,
+      10
+    ],
+    "priority": 12,
+    "guide": false,
+    "exampleModel": {
+      "kind": "reserve",
+      "expense": 600,
+      "coverage": 3
+    }
+  },
+  {
+    "id": "goalprice",
+    "label": "Se o preço do objetivo mudar",
+    "category": "Poupança",
+    "aliases": [
+      "objetivo fica mais caro",
+      "preco da meta",
+      "inflacao no objetivo"
+    ],
+    "answer": "O preço de um objetivo pode mudar enquanto poupas. Revê o custo estimado e o dinheiro já guardado, em vez de manter uma meta desatualizada.",
+    "detail": "Se a quantia necessária por mês ficar demasiado alta, podes ajustar o prazo ou escolher outra alternativa. A inflação geral não prevê exatamente o preço do artigo que queres comprar.",
+    "example": "Uma bicicleta prevista a 200 € passa a custar 220 €: com 100 € guardados, faltam 120 €.",
+    "formula": "",
+    "patterns": [
+      [
+        "objetivo|meta|bicicleta|telemovel",
+        "mais caro|preco.*mud|preco.*sub|inflacao|aumentou"
+      ]
+    ],
+    "sourcePages": [
+      7,
+      9
+    ],
+    "priority": 12,
+    "guide": true
+  },
+  {
+    "id": "familyplan",
+    "label": "Criar um plano de poupança em família",
+    "category": "Poupança",
+    "aliases": [
+      "poupar em familia",
+      "orcamento em familia",
+      "combinar poupanca em casa"
+    ],
+    "answer": "Um plano em família começa por combinar objetivos e conhecer rendimentos e gastos comuns. Dividir responsabilidades ajuda a acompanhar o plano.",
+    "detail": "Anotem o que é necessário, definam uma quantia possível e revejam em conjunto. As contribuições não precisam de ser iguais quando os rendimentos e responsabilidades são diferentes.",
+    "example": "Uma família pode escolher uma meta para material escolar e acompanhar todos os meses o valor reservado.",
+    "formula": "",
+    "patterns": [
+      [
+        "familia|familiares|todos em casa",
+        "poupar|poupanca|plano|orcamento"
+      ]
+    ],
+    "sourcePages": [
+      9,
+      11
+    ],
+    "priority": 12,
+    "guide": true
+  },
+  {
+    "id": "socialpressure",
+    "label": "Poupar perante pressão de colegas e publicidade",
+    "category": "Poupança",
+    "aliases": [
+      "pressao dos colegas",
+      "comprar para acompanhar",
+      "publicidade e poupanca"
+    ],
+    "answer": "A publicidade e a comparação com outras pessoas podem criar vontade de comprar. O orçamento dos outros não mostra o que é possível no teu.",
+    "detail": "Define um limite para lazer, espera antes de comprar e propõe alternativas que caibam nesse limite. Não precisas de explicar todos os detalhes do teu dinheiro para recusar uma compra.",
+    "example": "Podes combinar uma atividade gratuita quando uma saída paga ultrapassa o teu orçamento.",
+    "formula": "",
+    "patterns": [
+      [
+        "colegas|amigos|publicidade|redes sociais",
+        "pressao|comprar|gastar|acompanhar|influencia"
+      ]
+    ],
+    "sourcePages": [
+      10
+    ],
+    "priority": 12,
+    "guide": true
+  },
+  {
+    "id": "cashdigital",
+    "label": "Dinheiro físico e pagamentos digitais",
+    "category": "Poupança",
+    "aliases": [
+      "dinheiro vivo",
+      "cartao ou dinheiro",
+      "pagamentos digitais",
+      "mbway"
+    ],
+    "answer": "O dinheiro físico e os pagamentos digitais são formas de pagar. Nenhuma garante que vais poupar: o que importa é acompanhar os gastos e respeitar um limite possível.",
+    "detail": "Com dinheiro físico, podes separar pequenas quantias. Nos pagamentos digitais, confirma os movimentos e as renovações. Não partilhes códigos de acesso nem dados sensíveis no chat.",
+    "example": "Uma compra de 5 € reduz o orçamento em 5 €, quer seja paga com notas quer com cartão.",
+    "formula": "",
+    "patterns": [
+      [
+        "dinheiro vivo|cartao ou dinheiro|pagamentos digitais|mbway"
+      ],
+      [
+        "cartao|notas|numerario",
+        "poupar|controlar|gastar"
+      ]
+    ],
+    "sourcePages": [
+      9,
+      10,
+      40
+    ],
+    "priority": 12,
+    "guide": true
+  },
+  {
+    "id": "savingbalance",
+    "label": "Poupar sem prejudicar necessidades importantes",
+    "category": "Poupança",
+    "aliases": [
+      "poupar a qualquer custo",
+      "deixar de comer para poupar",
+      "poupar demais"
+    ],
+    "answer": "Poupar deve ajudar o teu bem-estar e os teus objetivos. Cortar alimentação necessária, saúde ou transporte essencial para guardar dinheiro pode criar problemas maiores.",
+    "detail": "Uma despesa de manutenção ou formação pode ter benefícios futuros. Compara as consequências da escolha, em vez de tratar toda a saída de dinheiro como um erro.",
+    "example": "Adiar uma reparação necessária só para manter o saldo pode provocar uma avaria mais cara.",
+    "formula": "",
+    "patterns": [
+      [
+        "poupar demais|poupar a qualquer custo|deixar de comer|cortar.*saude"
+      ],
+      [
+        "poupar|poupanca",
+        "sempre melhor|mais importante.*tudo|sacrificar"
+      ]
+    ],
+    "sourcePages": [
+      6,
+      42
+    ],
+    "priority": 12,
+    "guide": true
+  },
+  {
+    "id": "savingchallenge",
+    "label": "Desafios de poupança",
+    "category": "Poupança",
+    "aliases": [
+      "desafio de poupanca",
+      "desafio 52 semanas",
+      "desafio dos envelopes"
+    ],
+    "answer": "Um desafio de poupança é uma forma de acompanhar depósitos regulares. Só é útil se as quantias couberem no orçamento e o dinheiro não for retirado de necessidades essenciais.",
+    "detail": "Não tens de aumentar a quantia todas as semanas. Podes manter um valor pequeno, pausar ou adaptar o desafio aos meses em que recebes menos.",
+    "example": "Guardar um valor fixo possível todas as semanas pode ser mais fácil de manter do que um desafio com depósitos cada vez maiores.",
+    "formula": "",
+    "patterns": [
+      [
+        "desafio",
+        "poup|52|envelopes"
+      ]
+    ],
+    "sourcePages": [
+      10
+    ],
+    "priority": 12,
+    "guide": true
+  },
+  {
+    "id": "efficiencysaving",
+    "label": "Gastar agora para reduzir custos futuros",
+    "category": "Poupança",
+    "aliases": [
+      "eficiencia energetica",
+      "prazo de recuperacao",
+      "equipamento economico"
+    ],
+    "answer": "Uma compra pode exigir dinheiro agora e reduzir despesas depois. Compara o custo adicional com a redução de gastos prevista e a vida útil.",
+    "detail": "O prazo de recuperação simples é o custo adicional dividido pela poupança por período. Não inclui manutenção, alterações de preços ou o valor do dinheiro no tempo.",
+    "example": "Pagar mais 600 € por um equipamento que reduz gastos em 120 € por ano dá uma recuperação simples de 5 anos.",
+    "formula": "Prazo simples = custo adicional ÷ redução de despesas por período.",
+    "patterns": [
+      [
+        "eficiencia energetica|prazo de recuperacao|equipamento economico"
+      ],
+      [
+        "equipamento|eletrodomestico",
+        "consome menos|gasta menos|compensa"
+      ]
+    ],
+    "sourcePages": [
+      40,
+      41
+    ],
+    "priority": 12,
+    "guide": false,
+    "exampleModel": {
+      "kind": "payback",
+      "capital": 600,
+      "amount": 120,
+      "unit": "ano"
+    }
+  },
+  {
+    "id": "savingtransfer",
+    "label": "Transferências não são uma nova poupança",
+    "category": "Poupança",
+    "aliases": [
+      "transferir para a poupanca",
+      "transferencias entre contas",
+      "mover dinheiro"
+    ],
+    "answer": "Mover dinheiro entre contas tuas pode ajudar a separar objetivos, mas não cria dinheiro novo. A poupança do período depende do rendimento que não consumiste.",
+    "detail": "Evita contar duas vezes o mesmo valor: uma vez ao receber e outra ao transferir. O registo das contas deve mostrar a origem e o destino.",
+    "example": "Transferir 50 € da tua conta à ordem para outra conta tua muda onde está o dinheiro; não soma 50 € ao que já possuías.",
+    "formula": "",
+    "patterns": [
+      [
+        "transferir|transferencia|transferencias|mover",
+        "contas|poupanca",
+        "poup|rendimento|conta|nova"
+      ]
+    ],
+    "sourcePages": [
+      9,
+      43
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "savingreturns",
+    "label": "Mais rendimento esperado significa mais segurança?",
+    "category": "Poupança",
+    "aliases": [
+      "rentabilidade passada",
+      "retorno garantido",
+      "rendimento esperado"
+    ],
+    "answer": "Rendimento esperado e rendimento garantido são diferentes. Um bom resultado no passado não prova que uma aplicação vai voltar a ter o mesmo resultado.",
+    "detail": "Olha para as condições, os riscos de perda e o acesso ao capital. A designação de um produto, incluindo «sustentável», não garante segurança financeira.",
+    "example": "Uma aplicação que valorizou num ano pode perder valor no seguinte.",
+    "formula": "",
+    "patterns": [
+      [
+        "rentabilidade passada|rendimento esperado|retorno garantido"
+      ],
+      [
+        "passado|historico|sustentavel",
+        "garante|seguro|rentabilidade|retorno"
+      ]
+    ],
+    "sourcePages": [
+      16,
+      41
+    ],
+    "priority": 12,
+    "guide": false
+  },
+  {
+    "id": "savingcomparison",
+    "label": "Comparar poupanças em euros e em percentagem",
+    "category": "Poupança",
+    "aliases": [
+      "poupar mais euros ou percentagem",
+      "comparar taxas de poupanca",
+      "mais euros menos percentagem"
+    ],
+    "answer": "O montante mostra quantos euros guardaste; a taxa mostra a parte do rendimento que isso representa. Uma pessoa pode guardar mais euros e uma percentagem menor.",
+    "detail": "Para comparar, usa o mesmo período e rendimento disponível. Um aumento de 10% para 12% é de 2 pontos percentuais, e não de 2% em termos relativos.",
+    "example": "400 € de 4000 € são 10%; 150 € de 1000 € são 15%. O primeiro montante é maior, mas a segunda taxa é maior.",
+    "formula": "",
+    "patterns": [
+      [
+        "poup|guardar",
+        "mais euros|menos percentagem|montante e taxa|comparar taxas|pontos percentuais"
+      ]
+    ],
+    "sourcePages": [
+      4,
+      5
+    ],
+    "priority": 12,
+    "guide": false
+  }
+];
+  expanded.forEach(item=>{item.intents=item.patterns.map(group=>group.map(p=>new RegExp(p)));delete item.patterns;topics.push(item);});
+  const facets={
+  "emergency": [
+    {
+      "patterns": [
+        "onde|guardar|disponivel"
+      ],
+      "text": "A reserva precisa de poder ser usada quando surgir o imprevisto. Analisa segurança, facilidade de acesso e custos antes de a colocar numa aplicação com restrições."
+    },
+    {
+      "patterns": [
+        "repor|voltar|usei|gastei"
+      ],
+      "text": "Se usaste a reserva para uma necessidade, ela cumpriu a sua função. Revê o orçamento e reconstrói-a com uma quantia possível, sem deixar despesas essenciais por pagar."
+    }
+  ],
+  "impulse": [
+    {
+      "patterns": [
+        "quanto tempo|24|esperar"
+      ],
+      "text": "Não existe um tempo obrigatório. Podes experimentar esperar um dia numa compra pequena e mais tempo numa compra cara. Usa a pausa para confirmar a necessidade, o preço total e o orçamento."
+    }
+  ],
+  "deposittypes": [
+    {
+      "patterns": [
+        "qual|melhor|escolher"
+      ],
+      "text": "Depende de quando precisas do dinheiro e das condições. Compara acesso ao capital, prazo, juros e custos. Só com o nome «à ordem» ou «a prazo» não consigo escolher uma opção para ti."
+    }
+  ],
+  "goals": [
+    {
+      "patterns": [
+        "nao chegar|nao conseguir|impossivel|demora"
+      ],
+      "text": "Revê o custo, o saldo já guardado e o prazo. Se a quantia por mês não couber no orçamento, aumenta o prazo ou escolhe uma meta menor. Não cortes necessidades essenciais para cumprir a data."
+    }
+  ],
+  "contributioninterest": [
+    {
+      "patterns": [
+        "inicio|fim|diferenca"
+      ],
+      "text": "No início do período, o reforço rende durante esse período; no fim, só começa a render no período seguinte. Por isso, com a mesma taxa positiva, depósitos no início dão um saldo final maior."
+    }
+  ],
+  "debtandsaving": [
+    {
+      "patterns": [
+        "reserva|tudo|primeiro"
+      ],
+      "text": "Compara os encargos da dívida, o custo de amortizar e o dinheiro de que podes precisar para imprevistos. Uma taxa isolada não chega para decidir se deves usar toda a reserva."
+    }
+  ],
+  "zerosaving": [
+    {
+      "patterns": [
+        "culpa|falha|mal|inutil"
+      ],
+      "text": "Não conseguir poupar quando o dinheiro só chega para o necessário não é uma falha pessoal. Registar o orçamento continua a ajudar a perceber a situação e a preparar mudanças quando forem possíveis."
+    }
+  ]
+};
+  Object.entries(facets).forEach(([id,items])=>{const t=topics.find(t=>t.id===id);t.questions=items.map(q=>({...q,patterns:q.patterns.map(p=>new RegExp(p))}));});
+
+  // Sentence families: actions, obstacles and purpose, rather than only topic nouns.
+  const phraseFamilies={
+    habits:[[/aprender|comecar|queria|ajuda|preciso/,/gerir|organizar|controlar/,/dinheiro|gastos|financas/]],
+    expenselog:[[/dinheiro|mesada/,/desaparece|vai se|voa/,/nem sei|nao sei|onde|em que/]],
+    selfcontrol:[[/mesada|dinheiro/,/acaba logo|acaba depressa|gasto tudo|nao dura|desaparece todo/]],
+    autosave:[[/guardar|poupar|separar/,/logo|inicio|primeiro/,/sobrar|receber|recebo|fim/]],
+    inflationsaving:[[/inflacao|precos/,/guardar|poup|dinheiro/,/perder|come|vale|para que|perco|desvaloriza/]],
+    deposits:[[/banco|conta/,/melhor|escolher|comparar|seguro/,/poup|guardar|dinheiro/]],
+    little:[[/nao sobra|nao sobrar|nao consigo guardar/,/mal|culpa|falha|fazer|sobra|dinheiro/]],
+    importance:[[/para que|para quê|qual.*sentido/,/guardar|poupar/]],
+    goals:[[/quero|pretendo/,/chegar aos|alcancar|atingir/,/euros|dinheiro|meta|objetivo/]],
+    allowanceplan:[[/mesada/,/gerir|organizar|controlar|comecar/]]
+  };
+  Object.entries(phraseFamilies).forEach(([id,groups])=>{const t=topics.find(t=>t.id===id);t.intents=[...(t.intents||[]),...groups];});
+  const deposited=topics.find(t=>t.id==='deposits');deposited.questions=[{patterns:[/melhor|escolher|banco/],text:'Para comparar locais onde guardar, vê os custos, a possibilidade de levantar, a remuneração e as condições de segurança aplicáveis. O melhor depende do objetivo e do prazo. Não tenho uma comparação atual de bancos para escolher um por ti.'}];
   root.SavingsKnowledge=Object.freeze(topics.map(t=>Object.freeze(t)));
 })(typeof window!=='undefined'?window:globalThis);

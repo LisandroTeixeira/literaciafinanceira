@@ -113,7 +113,7 @@ console.log(checks+' verificações de conversas passaram: memória, dados em v�
 s=conversation();reply(s,'Quero juntar 300 € em 6 meses, já tenho 60 €','goals',/40,00/);
 s=conversation();reply(s,'Quero poupar cinco por mês','saving',/prazo/);reply(s,'doze meses','saving',/60,00/);
 s=conversation();reply(s,'Juros compostos: capital 1000 €, taxa 3% ao mês, tempo 2 anos','compoundinterest',/não pode ser usada/);reply(s,'Taxa anual 3%','compoundinterest',/1060,90/);
-s=conversation();isClarification(reply(s,'Guardar 10 € por mês durante 2 anos com juros 3%',null,/capitalização/));
+s=conversation();assert.equal(reply(s,'Guardar 10 € por mês durante 2 anos com juros 3%','contributioninterest',/efetiva anual, nominal anual ou mensal/).pending,true);checks++;
 s=conversation();reply(s,'Guardar 5 € por mês durante 12 meses','saving',/60/);reply(s,'E se fossem 10 € em vez de 5 €?','saving',/120,00/);
 reply(s,'Isso está errado','saving',/corrigir/);reply(s,'Quantia 2,50 €','saving',/30,00/);
 isClarification(reply(s,'De onde vêm os 999 €?','saving'));

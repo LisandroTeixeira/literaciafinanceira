@@ -83,7 +83,7 @@
   }
   const indexed=topics.map(topic=>({topic,aliases:topic.aliases.map(normalize)}));
   function queryText(raw){
-    let text=normalize(raw).replace(/\bpq\b/g,'por que').replace(/\bq\b/g,'que').replace(/\bn\b/g,'nao').replace(/\btb\b/g,'tambem');
+    let text=normalize(raw).replace(/\bguito\b/g,'dinheiro').replace(/\bgrana\b/g,'dinheiro').replace(/\bguardar uma parte\b/g,'poupar').replace(/\bpq\b/g,'por que').replace(/\bq\b/g,'que').replace(/\bn\b/g,'nao').replace(/\btb\b/g,'tambem');
     const vocabulary=['poupanca','orcamento','objetivo','despesas','impulso','subscricoes','mesada'];
     text=text.split(' ').map(word=>vocabulary.find(term=>word!==term && near(word,term)) || word).join(' ');
     return text;
@@ -94,7 +94,7 @@
       const exact=aliases.filter(alias=>!(topic.id==='eu' && alias==='euro' && /\b(?:\d+|um|dois|cinco) euros?\b/.test(text)) && (' '+text+' ').includes(' '+alias+' '));
       const phraseScore=exact.length?Math.max(...exact.map(a=>4+a.split(' ').length*3+a.length/30))+.1*exact.length:0;
       const matched=(topic.intents||[]).filter(group=>group.every(pattern=>pattern.test(text)));
-      const intentScore=matched.length?(topic.id==='saving'?10:topic.guide?43:34)+Math.max(...matched.map(group=>group.length*5)):0;
+      const intentScore=matched.length?(topic.id==='saving'?10:topic.guide?43:34)+(topic.priority||0)+Math.max(...matched.map(group=>group.length*5)):0;
       return {topic,score:Math.max(phraseScore,intentScore)+(intentScore?phraseScore/10:0)};
     }).filter(item=>item.score>0).sort((a,b)=>b.score-a.score);
     if(matches.length)return matches;
@@ -125,6 +125,7 @@
     if(/^(ola|oi|bom dia|boa tarde|boa noite|hey)( tudo bem)?$/.test(text))return {text:'Olá! Em que te posso ajudar?',topic:null};
     if(/^(obrigad[oa]|muito obrigad[oa]|valeu|obg)$/.test(text))return {text:'De nada! Queres um exemplo, uma explicação mais simples ou outro tema?',topic:previous || null};
     if(/^(ajuda|o que sabes|temas|como funciona|que perguntas posso fazer)$/.test(text))return {text:'Escreve a tua dúvida sobre poupança ou Economia. Posso explicar conceitos, dar exemplos e ajudar com cálculos. Depois podes pedir «Explica melhor» ou «Dá-me um exemplo».',topic:null};
+    const smart=smartTurn(input,null);if(smart)return smart;
     const plan=planningQuestion(input);if(plan)return plan;
     const calculated=calculate(input);if(calculated)return calculated;
     const previousTopic=topics.find(t=>t.id===previous);
@@ -141,6 +142,8 @@
         const pair=practical.slice(0,2).map(item=>item.topic);
         return {text:pair.map(topic=>topic.label+'\n'+topic.answer).join('\n\n'),topic:pair[0].id,related:[pair[1].id]};
       }
+      const facet=(best.questions||[]).find(q=>q.patterns.every(p=>p.test(text)));
+      if(facet&&!/exemplo|formula/.test(text))return {topic:best.id,text:facet.text};
       const mode=/\b(exemplo|exemplos)\b/.test(text)?'example':/\b(formula|calcula)\b/.test(text)?'formula':/\b(simples|simplifica|resume)\b/.test(text) && !/juros simples/.test(text)?'simple':'normal';
       if(matches.length>1 && /diferenca|diferencas|disting|compar|versus|\bvs\b/.test(text)){
         // Se uma expressão específica já cobre a comparação, não acrescentar um tema genérico.
@@ -177,7 +180,7 @@
   const units={dia:['dia','dias'],mes:['mês','meses'],semana:['semana','semanas'],ano:['ano','anos']};
   const unitName=(unit,n)=>units[unit]?.[n===1?0:1] || unit;
   const unitId=s=>s.startsWith('ano')?'ano':s.startsWith('mes')?'mes':s.startsWith('dia')?'dia':'semana';
-  const kindTopic=kind=>({periodic:'saving',goal:'goals'})[kind] || kind;
+  const kindTopic=kind=>({periodic:'saving',goal:'goals'})[kind] || extraKinds[kind] || kind;
   const slotNames={amount:'quantia guardada em cada período',unit:'frequência dos depósitos',time:'prazo',timeUnit:'unidade do prazo',target:'objetivo em euros',capital:'capital inicial em euros',rate:'taxa anual em %',income:'rendimento em euros',expense:'despesas em euros',saving:'poupança em euros',unemployed:'número de desempregados',active:'população ativa',output:'produção',workers:'número de trabalhadores',intermediate:'consumo intermédio',exports:'exportações',imports:'importações',initial:'valor inicial',final:'valor final'};
   const requirements={periodic:['amount','unit','time','timeUnit'],goal:['target','time','timeUnit'],simpleinterest:['capital','rate','time','timeUnit'],compoundinterest:['capital','rate','time','timeUnit'],budget:['income','expense'],savingsrate:['saving','income'],unemployment:['unemployed','active'],productivity:['output','workers'],inflation:['initial','final'],growth:['initial','final'],valueadded:['output','intermediate'],tradebalance:['exports','imports'],publicbudget:['income','expense']};
   const missing=m=>(requirements[m.kind]||[]).filter(key=>m[key]===undefined || m[key]===null);
@@ -198,6 +201,8 @@
       if(m.target<0 || m.amount<=0 || (m.initial||0)<0)return {topic,model:m,invalid:true,text:'Para estimar o prazo, indica uma meta e saldo inicial não negativos e uma quantia por período maior do que zero.'};
       m={...m,time:Math.ceil(Math.max(0,m.target-(m.initial||0))/m.amount),timeUnit:m.unit};
     }
+    if(m.kind==='arithmetic')return {topic,model:m,calculation:true,text:m.expression+' = '+number(m.total)+'.'};
+    if(extraKinds[m.kind])return extraEvaluate(m,topic===m.kind?extraKinds[m.kind]:topic);
     const need=missing(m);
     if(need.length && m.kind==='budget' && m.planning)return {topic,model:m,pending:true,text:need.includes('income')?'Quanto recebes e quanto gastas em despesas necessárias no mesmo período?': 'Recebes '+money(m.income)+'. Quanto gastas em despesas necessárias nesse mesmo período?'};
     if(need.length)return {topic,model:m,pending:true,text:'Para continuar, indica '+need.filter(k=>k!=='timeUnit' || !need.includes('time')).map(k=>slotNames[k]).join(' e ')+'.'+(/interest/.test(m.kind)?' Usa uma taxa anual e um prazo em anos.':'')};
@@ -237,7 +242,8 @@
     return null;
   }
   function edits(raw,m){
-    const t=normNumber(raw),change={};
+    if(extraKinds[m.kind])return extraEdits(raw,m);
+    const t=normNumber(naturalInput(raw)),change={};
     const set=(key,value)=>{if(value!==null)change[key]=value;};
     const period=t.match(new RegExp(NUM+'\\s*(?:€|euros?)?\\s*(?:por|a cada|todos os|todas as|ao)\\s*(mes|semana|ano|dia)\\b'));
     const duration=t.match(new RegExp(NUM+'\\s*(anos?|mes(?:es)?|semanas?|dias?)\\b'));
@@ -308,13 +314,16 @@
     else if(/inflacao|crescimento|variacao/.test(text))kind=/crescimento/.test(text)?'growth':'inflation';
     else if(/juntar|objetivo|meta|quero comprar|pretendo comprar/.test(text))kind='goal';
     else if(/guardar|poupar|poupanca|depositar/.test(text))kind='periodic';
+    if(!kind && /recebo|ganho/.test(text) && /gasto|despesas/.test(text))kind='budget';
     if(!kind || !/\d/.test(text) && !/calcular|calcula|calculo|quanto/.test(text))return null;
     const model={kind};Object.assign(model,edits(input,model));
     if(model.amount!==undefined && model.unit)model.kind='periodic';
     return Object.keys(model).length>1 || /calcular|calcula|calculo/.test(text)?model:null;
   }
   function modelFacts(m){
+    if(m?.kind==='arithmetic')return [{value:m.total,label:'resultado',explanation:m.expression+' = '+number(m.total)+'.',unit:'',formatted:number(m.total)}];
     if(!m || missing(m).length || evaluate(m)?.invalid)return [];
+    if(extraKinds[m.kind])return extraFacts(m);
     const facts=[];
     const add=(value,label,explanation,unit='€')=>{if(Number.isFinite(value))facts.push({value,label,explanation,unit});};
     const amountText=(v,u)=>u==='€'?money(v):number(v)+(u==='%'?'%':u?' '+u:'');
@@ -378,8 +387,10 @@
     else if(/prazo|tempo|meses|semanas|anos|depositos/.test(text))pattern=/prazo|número de depósitos/;
     else if(/meta|objetivo/.test(text))pattern=/objetivo/;
     else if(/resultado|esse valor|esse numero/.test(text))pattern=/total poupado|montante final|saldo|margem disponível|variação percentual|produtividade|taxa|VAB/;
-    else if(/total|montante|fim|final|acumul|juntou|juntado/.test(text))pattern=/total poupado|montante final|saldo|margem disponível|valor final/;
-    else if(/guard|poup|por mes|por semana|quantia/.test(text))pattern=/quantia|^poupança$|saldo \/ poupança|margem disponível/;
+    else if(/desconto/.test(text))pattern=/desconto/;
+    else if(/poder de compra|valor real/.test(text))pattern=/poder de compra/;
+    else if(/total|montante|fim|final|acumul|juntou|juntado/.test(text))pattern=/total poupado|montante final|saldo|margem disponível|valor final|preço final/;
+    else if(/guard|poup|por mes|por semana|quantia|reforco/.test(text))pattern=/quantia|reforço|^poupança$|saldo \/ poupança|margem disponível/;
     const found=pattern?facts.filter(f=>pattern.test(f.label)):[];
     if(found.length)return {topic:context.topic,model:context.model,text:found.map(f=>f.formatted+' — '+f.label+'. '+f.explanation).join('\n\n')};
     if(context.model && /como|por que|porque|de onde|valor|valores/.test(text))return {...evaluate(context.model,context.topic),text:'Vamos usar os dados deste exemplo:\n'+evaluate(context.model,context.topic).text};
@@ -436,16 +447,240 @@
     return null;
   }
 
+  // Phrase interpretation, named operands and explicit assumptions for saving exercises.
+  // Everything runs locally; unrecognised conditions are clarified, never silently guessed.
+  const cardinals={zero:0,um:1,uma:1,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,sete:7,oito:8,nove:9,dez:10,onze:11,doze:12,treze:13,catorze:14,quatorze:14,quinze:15,dezasseis:16,dezesseis:16,dezassete:17,dezessete:17,dezoito:18,dezanove:19,dezenove:19,vinte:20,trinta:30,quarenta:40,cinquenta:50,sessenta:60,setenta:70,oitenta:80,noventa:90,cem:100,cento:100,duzentos:200,duzentas:200,trezentos:300,trezentas:300,quatrocentos:400,quinhentos:500,seiscentos:600,setecentos:700,oitocentos:800,novecentos:900,mil:1000};
+  function naturalInput(raw){
+    let t=String(raw).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const words=Object.keys(cardinals).join('|');
+    t=t.replace(new RegExp('\\b(?:'+words+')(?:\\s+(?:e\\s+)?(?:'+words+'))*\\b(?=\\s*(?:euros?\\b|€|por cento\\b|%|meses?\\b|anos?\\b|semanas?\\b|dias?\\b))','g'),phrase=>{
+      let total=0,current=0;for(const w of phrase.split(/\s+/)){if(w==='e')continue;if(w==='mil'){total+=(current||1)*1000;current=0;}else current+=cardinals[w]||0;}return String(total+current);
+    });
+    if(/\d/.test(t))t=t.replace(/todos os meses/g,'por mes').replace(/todas as semanas/g,'por semana').replace(/todos os dias/g,'por dia').replace(/todos os anos/g,'por ano');
+    return t.replace(/\bpor cento\b/g,'%').replace(/\bp\s*\/\s*mes\b/g,'por mes').replace(/\b(?:meter|meto|por|ponho|colocar|coloco) (?:dinheiro )?(?:de lado|a parte)\b/g,'guardar')
+      .replace(/\b(?:vou|consigo|posso|quero) separar\b/g,'guardar').replace(/\b(?:guardo|poupo)\s+(?=\d)/g,'guardar ')
+      .replace(/\bmensalmente\b/g,'por mes').replace(/\bsemanalmente\b/g,'por semana').replace(/\bdiariamente\b/g,'por dia').replace(/\banualmente\b/g,'por ano')
+      .replace(/\b(?:ao|cada) (mes|semana|ano|dia)\b/g,'por $1').replace(/\b(?:uns|umas|cerca de)\s+(?=\d)/g,'');
+  }
+  const extraKinds={contributioninterest:'contributioninterest',realvalue:'nominalreal',realrate:'realinterest',discount:'pricecompare',unitprice:'pricecompare',reserve:'emergencyamount',payback:'efficiencysaving',percentage:'savingsrate',annualreserve:'annualexpenses',budgetitems:'budget'};
+  Object.assign(requirements,{contributioninterest:['amount','rate','rateBasis','time','timeUnit','timing'],realvalue:['capital','inflationRate','time'],realrate:['rate','inflationRate'],discount:['price','discountRate'],unitprice:['priceA','quantityA','priceB','quantityB'],reserve:['expense','coverage'],payback:['capital','amount','unit'],percentage:['income','savingRate'],annualreserve:['target','time'],budgetitems:['income','items']});
+  Object.assign(slotNames,{rateBasis:'tipo de taxa (efetiva anual, nominal anual ou mensal)',timing:'momento do reforço (início ou fim do mês)',inflationRate:'inflação anual em %',price:'preço original em euros',discountRate:'desconto em %',priceA:'preço da opção A',quantityA:'quantidade da opção A',priceB:'preço da opção B',quantityB:'quantidade da opção B',coverage:'meses de cobertura escolhidos',savingRate:'percentagem que queres guardar',items:'despesas desse período'});
+  function extraMetrics(m){
+    if(m.kind==='contributioninterest'){
+      const n=m.timeUnit==='ano'?m.time*12:m.timeUnit==='mes'?m.time:NaN;
+      const i=m.rateBasis==='effectiveAnnual'?Math.expm1(Math.log1p(m.rate/100)/12):m.rateBasis==='nominalAnnual'?m.rate/1200:m.rate/100;
+      const growth=Math.expm1(n*Math.log1p(i)),factor=1+growth,annuity=i===0?n:growth/i;
+      const deposited=(m.capital||0)+m.amount*n,total=(m.capital||0)*factor+m.amount*annuity*(m.timing==='begin'?1+i:1);
+      const interest=total-deposited,net=total-interest*(m.taxRate||0)/100-(m.fees||0);
+      return {n,i,deposited,total,interest,net};
+    }
+    if(m.kind==='realvalue')return {total:m.capital/Math.pow(1+m.inflationRate/100,m.time)};
+    if(m.kind==='realrate')return {total:((1+m.rate/100)/(1+m.inflationRate/100)-1)*100};
+    if(m.kind==='discount')return {saved:m.price*m.discountRate/100,total:m.price*(1-m.discountRate/100)};
+    if(m.kind==='unitprice')return {a:m.priceA/m.quantityA,b:m.priceB/m.quantityB};
+    if(m.kind==='reserve')return {total:m.expense*m.coverage};
+    if(m.kind==='payback')return {total:m.capital/m.amount};
+    if(m.kind==='percentage')return {total:m.income*m.savingRate/100};
+    if(m.kind==='annualreserve')return {total:Math.ceil(Math.max(0,m.target-(m.initial||0))/m.time*100-1e-8)/100};
+    if(m.kind==='budgetitems')return {expense:Object.values(m.items||{}).reduce((s,x)=>s+x,0),total:m.income-Object.values(m.items||{}).reduce((s,x)=>s+x,0)};
+    return {};
+  }
+  function extraEvaluate(m,topic=extraKinds[m.kind]){
+    const need=missing(m),invalid=text=>({topic,model:m,text,invalid:true,clarification:true});
+    if(Object.values(m).some(v=>typeof v==='number' && (!Number.isFinite(v)||Math.abs(v)>1e12)))return invalid('Usa valores finitos até um bilião para este exercício.');
+    if(need.length){const key=need[0];const prompts={amount:'Quanto queres guardar em cada mês?',rate:'Qual é a taxa de juro em percentagem?',rateBasis:'Essa taxa é efetiva anual, nominal anual ou mensal? O tipo da taxa altera a conversão para cada mês.',time:'Qual é o prazo? Indica, por exemplo, «12 meses» ou «2 anos».',timeUnit:'O prazo é em meses ou em anos?',timing:'Vais fazer os reforços no início ou no fim de cada mês?',capital:'Qual é o montante em euros?',inflationRate:'Qual é a inflação anual em percentagem que queres usar no exemplo?',expense:'Quais são as despesas mensais necessárias em euros?',coverage:'Quantos meses queres que a reserva cubra? Escolhe uma cobertura para simular; não existe uma obrigatória.',unit:'A redução de despesas indicada é por mês ou por ano?',income:'Qual é o rendimento do mesmo período, em euros?',savingRate:'Que percentagem do rendimento queres simular?',target:'Qual é o valor da despesa que queres preparar?',price:'Qual é o preço antes do desconto?',discountRate:'Qual é a percentagem de desconto?'};return {topic,model:m,pending:true,askKey:key,text:prompts[key]||'Indica '+slotNames[key]+'.'};}
+    if(['capital','amount','income','expense','target','price','priceA','priceB','initial','fees'].some(k=>m[k]!==undefined&&m[k]<0))return invalid('Os montantes deste exercício devem ser não negativos. Corrige o valor indicado.');
+    if(['savingRate','discountRate','taxRate'].some(k=>m[k]!==undefined&&(m[k]<0||m[k]>100)))return invalid('Indica uma percentagem entre 0% e 100% para este exercício.');
+    if(m.kind==='contributioninterest'&&m.compounding==='unsupported')return invalid('Este exercício de reforços usa capitalização mensal. Indicaste outra frequência; confirma capitalização mensal ou separa esse exercício para não misturar condições.');
+    if(m.kind==='contributioninterest' && (!['mes','ano'].includes(m.timeUnit)||m.time<0||m.time*(m.timeUnit==='ano'?12:1)>1200||!Number.isInteger(m.time*(m.timeUnit==='ano'?12:1))||m.rate<0||m.rate>100||!['effectiveAnnual','nominalAnnual','monthly'].includes(m.rateBasis)||!['begin','end'].includes(m.timing)))return invalid('Usa um prazo em meses ou anos que corresponda a meses inteiros (até 100 anos), uma taxa entre 0% e 100% e reforços no início ou no fim do mês.');
+    if(m.kind==='realvalue' && (m.inflationRate<=-100||m.time<0||m.time>100))return invalid('A inflação tem de ser superior a −100% e o prazo deve estar entre 0 e 100 anos.');
+    if(m.kind==='realrate' && (m.inflationRate<=-100||m.rate<=-100))return invalid('As taxas têm de ser superiores a −100% para comparar o poder de compra.');
+    if(m.kind==='unitprice' && (m.quantityA<=0||m.quantityB<=0))return invalid('As duas quantidades devem ser maiores do que zero e usar a mesma unidade.');
+    if(m.kind==='reserve' && (m.coverage<=0||!Number.isInteger(m.coverage)))return invalid('Escolhe um número inteiro de meses de cobertura maior do que zero.');
+    if(m.kind==='payback' && m.amount<=0)return invalid('A redução de despesas por período tem de ser maior do que zero para calcular a recuperação.');
+    if(m.kind==='annualreserve' && (m.time<=0||!Number.isInteger(m.time)))return invalid('Indica um número inteiro de meses maior do que zero até ao pagamento.');
+    if(m.kind==='budgetitems' && Object.values(m.items).some(x=>x<0||!Number.isFinite(x)||x>1e12))return invalid('As despesas devem ser não negativas e finitas.');
+    const v=extraMetrics(m);if(Object.values(v).some(x=>!Number.isFinite(x)||Math.abs(x)>1e15))return invalid('O resultado seria demasiado grande para este exercício. Usa valores mais pequenos.');
+    let text='';
+    if(m.kind==='contributioninterest')text='Em '+number(v.n)+' meses, com reforços de '+money(m.amount)+' no '+(m.timing==='begin'?'início':'fim')+' de cada mês:\n• Dinheiro colocado por ti: '+money(v.deposited)+'.\n• Juros gerados: '+money(v.interest)+'.\n• Montante final bruto: '+money(v.total)+'.'+((m.taxRate!==undefined||m.fees!==undefined)?'\n• Depois das deduções indicadas: '+money(v.net)+'.':'')+'\n\nTaxa mensal usada: '+number(v.i*100)+'%. '+(m.rateBasis==='effectiveAnnual'?'Converti a taxa efetiva anual pela raiz de ordem 12.':m.rateBasis==='nominalAnnual'?'Dividi a taxa nominal anual por 12.':'Usei a taxa mensal indicada.')+' Taxa constante, capitalização mensal e sem levantamentos.'+((m.taxRate!==undefined||m.fees!==undefined)?' O imposto indicado incide apenas sobre os juros no fim do exercício; os custos indicados são totais.':' Antes de impostos e comissões.');
+    if(m.kind==='realvalue')text=money(m.capital)+' ÷ (1 + '+number(m.inflationRate/100)+')^'+number(m.time)+' = '+money(v.total)+' a preços do início.\n\nO saldo nominal é '+money(m.capital)+', mas este é o poder de compra equivalente no exemplo. Inflação anual constante; não é uma previsão.';
+    if(m.kind==='realrate')text='(1 + '+number(m.rate/100)+') ÷ (1 + '+number(m.inflationRate/100)+') − 1 = '+number(v.total)+'% de taxa real.\n\n'+(v.total<0?'O poder de compra diminui, apesar da remuneração nominal.':'O poder de compra aumenta neste exemplo.')+' As taxas referem-se ao mesmo período; antes de custos e impostos.';
+    if(m.kind==='discount')text=money(m.price)+' × '+number(m.discountRate)+'% = '+money(v.saved)+' de desconto.\nPreço final: '+money(v.total)+'.\n\nSó guardas efetivamente essa diferença se não a gastares noutra coisa. Confirma também se precisas da compra.';
+    if(m.kind==='unitprice')text='Opção A: '+money(m.priceA)+' ÷ '+number(m.quantityA)+' = '+money(v.a)+' por '+(m.measure||'unidade')+'.\nOpção B: '+money(m.priceB)+' ÷ '+number(m.quantityB)+' = '+money(v.b)+' por '+(m.measure||'unidade')+'.\n\n'+(Math.abs(v.a-v.b)<1e-10?'O preço por unidade é igual.':'A opção '+(v.a<v.b?'A':'B')+' tem menor preço por unidade.')+' Compara a mesma unidade e qualidade e evita desperdício; o preço por unidade não decide sozinho a compra.';
+    if(m.kind==='reserve')text=money(m.expense)+' por mês × '+number(m.coverage)+' meses = '+money(v.total)+' de meta para a reserva.\n\nEsta é a cobertura escolhida no exemplo, não um valor obrigatório. Ajusta-a às necessidades e à possibilidade de guardar.';
+    if(m.kind==='payback')text=money(m.capital)+' de custo adicional ÷ '+money(m.amount)+' de redução por '+unitName(m.unit,1)+' = '+number(v.total)+' '+unitName(m.unit,v.total)+' de recuperação simples.\n\nNão inclui manutenção, alterações de preços nem o valor do dinheiro no tempo. Confirma a vida útil e se tens margem para o custo inicial.';
+    if(m.kind==='percentage')text=money(m.income)+' × '+number(m.savingRate)+'% = '+money(v.total)+' para guardar no período.\nRestam '+money(m.income-v.total)+' antes das despesas.\n\nA percentagem foi escolhida por ti; só é viável se as despesas necessárias couberem no que resta.';
+    if(m.kind==='annualreserve')text=money(Math.max(0,m.target-(m.initial||0)))+' por preparar ÷ '+number(m.time)+' meses = '+money(v.total)+' por mês, arredondado por excesso ao cêntimo.\n\n'+(m.initial?'Já estavam reservados '+money(m.initial)+'. ':'')+'Esta é uma despesa previsível; a reserva para imprevistos tem outra finalidade.';
+    if(m.kind==='budgetitems')text='Rendimento: '+money(m.income)+'.\n'+Object.entries(m.items).map(([name,x])=>'• '+name+': '+money(x)+'.').join('\n')+'\nDespesas somadas: '+money(v.expense)+'.\nMargem: '+money(m.income)+' − '+money(v.expense)+' = '+money(v.total)+'.\n\n'+(v.total>0?'Este é o que sobra antes de despesas não indicadas e imprevistos. Escolhe uma quantia possível para guardar.':v.total===0?'Não sobra dinheiro com estes dados. Não forces uma poupança que retire dinheiro do necessário.':'As despesas ultrapassam o rendimento indicado. Primeiro, revê o orçamento e os dados.')+' Todos os valores devem referir-se ao mesmo período.';
+    return {topic,model:m,calculation:true,text};
+  }
+  function extraEdits(raw,m,context){
+    const t=normNumber(naturalInput(raw)),change={};const put=(k,x)=>{if(x!==null)change[k]=x;};
+    const duration=t.match(new RegExp(NUM+'\\s*(anos?|mes(?:es)?)\\b'));
+    if(duration && m.kind!=='reserve'){change.time=parse(duration[1]);change.timeUnit=unitId(duration[2]);if(m.kind==='realvalue'&&change.timeUnit==='mes'){change.time/=12;change.timeUnit='ano';}}
+    if(m.kind==='contributioninterest'){
+      if(/capitalizacao (?:anual|trimestral|semanal|diaria)/.test(t))change.compounding='unsupported';
+      if(/capitalizacao mensal/.test(t))change.compounding='monthly';
+      put('amount',field(t,'(?:guardar|guardasse|guardo|poupar|poupo|depositar|reforco(?: mensal)?|quantia mensal)'));
+      const periodic=t.match(new RegExp(NUM+'\\s*(?:€|euros?)?\\s*por mes'));if(periodic)change.amount=parse(periodic[1]);
+      put('capital',field(t,'(?:capital(?: inicial)?|ja tenho|saldo inicial|comeco com)'));
+      if(!/imposto|tributacao/.test(t)||/taxa|juro/.test(t))put('rate',find(t,NUM+'\\s*%')); 
+      if(/efetiva anual|anual efetiva/.test(t))change.rateBasis='effectiveAnnual';else if(/nominal anual|anual nominal|tanb/.test(t))change.rateBasis='nominalAnnual';else if(/taxa mensal|juro mensal|%\s*(?:por mes|mensal)/.test(t))change.rateBasis='monthly';
+      if(/no inicio|inicio do mes/.test(t))change.timing='begin';if(/no fim|fim do mes|final do mes/.test(t))change.timing='end';
+      put('taxRate',field(t,'(?:imposto(?: de)?|tributacao(?: de)?)'));put('fees',field(t,'(?:comissoes(?: totais)?(?: de)?|custos(?: totais)?(?: de)?)'));
+      if(/sem impostos/.test(t))change.taxRate=0;if(/sem comissoes|sem custos/.test(t))change.fees=0;
+    }
+    if(m.kind==='realvalue'){put('capital',field(t,'(?:capital(?: inicial)?|valor nominal|montante|saldo|tenho|dinheiro)'));if(!/e se|afinal|de onde/.test(t))put('capital',find(t,NUM+'\\s*(?:€|euros?)'));put('inflationRate',field(t,'(?:inflacao(?: anual)?(?: de)?)')); }
+    if(m.kind==='realrate'){put('rate',field(t,'(?:juro(?: nominal)?(?: de)?|taxa nominal(?: de)?|rendimento(?: de)?)'));put('inflationRate',field(t,'(?:inflacao(?: de)?)'));}
+    if(m.kind==='discount'){put('price',field(t,'(?:preco(?: original)?|custa|custasse|artigo de|produto de|era|antes)'));put('discountRate',field(t,'(?:desconto(?: de)?)'));put('discountRate',find(t,NUM+'\\s*%\\s*(?:de )?desconto'));}
+    if(m.kind==='unitprice'){
+      for(const [label,key] of [['preco a','priceA'],['quantidade a','quantityA'],['preco b','priceB'],['quantidade b','quantityB']])put(key,field(t,label));
+    }
+    if(m.kind==='reserve'){put('expense',field(t,'(?:despesas?(?: mensais)?(?: de)?|gasto|gastos mensais(?: de)?)'));put('coverage',find(t,NUM+'\\s*meses'));put('coverage',field(t,'(?:cobertura(?: de)?)'));}
+    if(m.kind==='payback'){put('capital',field(t,'(?:custo adicional(?: de)?|custa mais|pagar mais|pago mais|mais)'));put('amount',field(t,'(?:reduz(?: despesas)?(?: em)?|poupa|economiza|poupanca anual(?: de)?|reducao(?: de)?|poupar)'));const p=t.match(/por (ano|mes)/);if(p)change.unit=p[1];}
+    if(m.kind==='percentage'){put('income',field(t,'(?:rendimento(?: de)?|recebo|ganho|mesada(?: de)?)'));put('savingRate',find(t,NUM+'\\s*%'));}
+    if(m.kind==='annualreserve'){put('target',field(t,'(?:despesa(?: anual)?(?: de)?|seguro(?: de)?|custa|valor(?: de)?|preparar|pagar)'));put('initial',field(t,'(?:ja tenho|ja reservei|ja guardei|saldo inicial)'));if(duration&&unitId(duration[2])==='ano')change.time*=12;}
+    const bare=t.trim().match(new RegExp('^(?:(?:e|afinal|sao|com)\\s+)?'+NUM+'\\s*(?:€|euros?|%)?[?.!]*$'));
+    if(bare&&context?.askKey&&!Object.keys(change).length)change[context.askKey]=parse(bare[1]);
+    if(context?.askKey==='rateBasis'){if(/^(?:e )?(?:efetiva|efetiva anual)$/.test(normalize(t)))change.rateBasis='effectiveAnnual';if(/^(?:e )?(?:nominal|nominal anual)$/.test(normalize(t)))change.rateBasis='nominalAnnual';if(/^mensal$/.test(normalize(t)))change.rateBasis='monthly';}
+    if(context?.askKey==='timing'){if(/^inicio$/.test(normalize(t)))change.timing='begin';if(/^fim$/.test(normalize(t)))change.timing='end';}
+    return change;
+  }
+  function extraFacts(m){
+    if(missing(m).length||extraEvaluate(m)?.invalid)return [];
+    const v=extraMetrics(m),facts=[];
+    const add=(value,label,explanation,unit='€')=>facts.push({value,label,explanation,unit,formatted:unit==='€'?money(value):number(value)+(unit==='%'?'%':unit?' '+unit:'')});
+    if(m.kind==='contributioninterest'){add(m.capital||0,'capital inicial','É a quantia disponível antes dos reforços.');add(m.amount,'reforço mensal','É o depósito escolhido para cada mês.');add(v.deposited,'dinheiro colocado por ti',money(m.capital||0)+' + '+money(m.amount)+' × '+number(v.n)+' meses.');add(v.interest,'juros','É o montante final bruto menos o dinheiro colocado por ti.');add(v.total,'montante final',extraEvaluate(m).text);if(m.taxRate!==undefined||m.fees!==undefined)add(v.net,'montante após deduções','Subtraí ao total o imposto sobre juros e os custos totais indicados.');add(m.rate,'taxa de juro','É a taxa e o tipo que indicaste para o exemplo.','%');add(v.n,'prazo','É o número de meses de reforços.','meses');}
+    else if(m.kind==='budgetitems'){add(m.income,'rendimento','É o dinheiro recebido no período.');add(v.expense,'despesas','Somei as despesas identificadas no orçamento.');add(v.total,'margem disponível',money(m.income)+' − '+money(v.expense)+' = '+money(v.total)+'.');for(const [name,x] of Object.entries(m.items))add(x,name,'É a despesa indicada para esta categoria.');}
+    else {const label={realvalue:'poder de compra',realrate:'taxa real',reserve:'meta da reserva',discount:'preço final',payback:'prazo de recuperação',percentage:'quantia para guardar',annualreserve:'reserva por mês'}[m.kind];if(label)add(v.total,label,extraEvaluate(m).text,m.kind==='realrate'?'%':m.kind==='payback'?unitName(m.unit,v.total):'€');if(m.kind==='discount')add(v.saved,'desconto','É a diferença entre o preço original e o preço final.');}
+    return facts;
+  }
+  function phraseBudget(raw,context){
+    const t=normNumber(naturalInput(raw));
+    const income=field(t,'(?:recebo|ganho|rendimento(?: disponivel)?|salario(?: liquido)?)');
+    const expenses=field(t,'(?:gasto(?: no total| ao todo)?|despesas(?: totais)?|consumo)');
+    const categories='renda|alimentacao|comida|transportes|transporte|luz|eletricidade|agua|internet|lazer|subscricoes|telemovel|escola|seguro|prestacao';
+    const items={};
+    for(const match of t.matchAll(new RegExp(NUM+'\\s*(?:€|euros?)?\\s*(?:de |em |para |na |no |com |pela |pelo )?('+categories+')\\b','g')))items[match[2]]=parse(match[1]);
+    for(const match of t.matchAll(new RegExp('\\b('+categories+')\\s*(?:de |: |custa |fica em |passa para |fosse |for |sao )?'+NUM,'g')))items[match[1]]=parse(match[2]);
+    const itemFollow=context?.model?.kind==='budgetitems'&&Object.keys(items).length&&/e se|afinal|passa|fosse|corrige/.test(t);
+    if(itemFollow){const model={...context.model,items:{...context.model.items,...items},...(income!==null?{income}:{})};return extraEvaluate(model,context.topic);}
+    if(income!==null&&Object.keys(items).length>=2){
+      if(/por ano|anual/.test(t)&&/por mes|mensal/.test(t))return {topic:'budget',clarification:true,text:'Há valores mensais e anuais nesta frase. Converte-os para o mesmo período ou indica o período de cada despesa antes de eu os somar.'};
+      if(expenses!==null&&/no total|despesas totais|gasto(?: ao todo| no total)|total de despesas/.test(t)&&expenses!==Object.values(items).reduce((s,x)=>s+x,0))return {topic:'budget',clarification:true,text:'Indicou-se um total de despesas e uma lista de despesas. Essa lista faz parte do total ou é adicional? Não vou somar os dois sem confirmar.'};
+      return extraEvaluate({kind:'budgetitems',income,items,...(/por mes|mensal/.test(t)?{frequency:'mes'}:{})});
+    }
+    if(income!==null&&expenses!==null&&/por ano|anual/.test(t)&&/por mes|mensal/.test(t))return {topic:'budget',clarification:true,text:'O rendimento e as despesas parecem usar períodos diferentes. Indica ambos para o mesmo período antes de fazer a subtração.'};
+    if(income!==null&&expenses!==null&&!/e se|afinal|de onde|como cheg|porque|por que/.test(t))return evaluate({kind:'budget',income,expense:expenses,planning:/posso|devo|consigo/.test(t),...(/por mes|mensal/.test(t)?{frequency:'mes'}:{})},context?.model?.kind==='budget'&&context.pending?context.topic:'budget');
+    return null;
+  }
+
+  function arithmeticTurn(raw){
+    if(!/^(?:quanto e|quanto da|calcula|calcular|faz a conta)\b/.test(normalize(raw)))return null;
+    let expr=raw.replace(/^(?:quanto e|quanto da|calcula|calcular|faz a conta)\s*/,'').replace(/euros?|€/g,'').replace(/vezes|multiplicado por|×/g,'*').replace(/a dividir por|dividido por|÷/g,'/').replace(/mais/g,'+').replace(/menos/g,'-').replace(/[?!]$/,'').trim();
+    if(!/^[\d\s.,+*/()−-]+$/.test(expr)||!/[+*/-]/.test(expr))return null;
+    expr=expr.replace(/−/g,'-');const tokens=expr.match(new RegExp(NUM.replace('(-?','(')+'|[+*/()-]','g'))||[];
+    if(tokens.length>80)return {topic:null,clarification:true,text:'Essa conta tem demasiadas parcelas. Divide-a em contas mais pequenas.'};
+    let at=0;
+    function atom(){const token=tokens[at++];if(token==='+')return atom();if(token==='-')return -atom();if(token==='('){const v=sum();if(tokens[at++]!==')')throw Error('parênteses');return v;}if(!token||!/^[\d., ]+$/.test(token))throw Error('número');return parse(token);}
+    function product(){let v=atom();while(tokens[at]==='*'||tokens[at]==='/'){const op=tokens[at++],b=atom();if(op==='/'&&b===0)throw Error('zero');v=op==='*'?v*b:v/b;}return v;}
+    function sum(){let v=product();while(tokens[at]==='+'||tokens[at]==='-'){const op=tokens[at++],b=product();v=op==='+'?v+b:v-b;}return v;}
+    try{const total=sum();if(at!==tokens.length||!Number.isFinite(total)||Math.abs(total)>1e15)throw Error('limites');return {topic:'saving',calculation:true,text:expr+' = '+number(total)+'.'+(/euros?|€/.test(raw)?' Resultado em euros.':''),model:{kind:'arithmetic',expression:expr,total}};}catch(error){return {topic:'saving',clarification:true,text:error.message==='zero'?'Não é possível dividir por zero. Corrige o divisor.':'Não consegui ler a conta. Usa números, +, −, ×, ÷ e parênteses.'};}
+  }
+  function unitPrices(t){
+    if(!/compensa|comparar|mais barato|mais barata|preco por|qual.*(?:opcao|embalagem)/.test(t))return null;
+    const found=[];const measures={kg:[1000,'g'],g:[1,'g'],l:[1000,'ml'],litros:[1000,'ml'],litro:[1000,'ml'],ml:[1,'ml'],unidade:[1,'unidade'],unidades:[1,'unidade']};
+    const pattern=new RegExp(NUM+'\\s*(kg|g|litros?|l|ml|unidades?)\\b\\s*(?:por|a|custa|custam|de|:|=)?\\s*'+NUM+'\\s*(?:€|euros?)','g');
+    for(const m of t.matchAll(pattern)){const factor=measures[m[2]];found.push({quantity:parse(m[1])*factor[0],unit:factor[1],price:parse(m[3])});}
+    if(found.length!==2)return null;
+    if(found[0].unit!==found[1].unit)return {topic:'pricecompare',clarification:true,text:'As quantidades usam medidas diferentes. Compara a mesma unidade; não vou tratar massa e volume como se fossem iguais.'};
+    const scale=found[0].unit==='unidade'?1:1000,measure=found[0].unit==='g'?'kg':found[0].unit==='ml'?'litro':'unidade';
+    return extraEvaluate({kind:'unitprice',priceA:found[0].price,quantityA:found[0].quantity/scale,priceB:found[1].price,quantityB:found[1].quantity/scale,measure});
+  }
+
+  function smartTurn(raw,context,history=[]){
+    const value=naturalInput(raw),t=normNumber(value),n=normalize(t);
+    if(/^(ola|oi|obrigado|obrigada|ok|sim|nao|esquece|muda de assunto|recomeca)|pdf|apresentacao|quem ganhou/.test(n))return null;
+    // Unusual rates, unknown dates, products and tax rules are not guessed.
+    if(/\d+(?:[.,]\d+)?e[+-]?\d+/i.test(raw))return null;
+    if(/cabe.*orcamento|consigo.*(?:meta|objetivo)|esse plano.*possivel|viavel/.test(n)&&!/^a meta nao cabe/.test(n)){
+      const goal=context?.model?.kind==='goal'?context.model:history.slice().reverse().find(c=>c.model?.kind==='goal')?.model;
+      const budget=context?.model&&['budget','budgetitems'].includes(context.model.kind)?context.model:history.slice().reverse().find(c=>['budget','budgetitems'].includes(c.model?.kind))?.model;
+      if(goal&&budget&&!missing(goal).length&&!missing(budget).length){
+        const frequency=budget.frequency;
+        if(!frequency||frequency!==goal.timeUnit)return {topic:'goals',model:goal,clarification:true,text:'Para comparar o plano com o orçamento, confirma que rendimento e despesas são por '+unitName(goal.timeUnit,1)+'. O prazo da meta está em '+unitName(goal.timeUnit,goal.time)+'.'};
+        const margin=budget.income-(budget.kind==='budgetitems'?extraMetrics(budget).expense:budget.expense),deposit=Math.ceil(Math.max(0,goal.target-(goal.initial||0))/goal.time*100-1e-8)/100;
+        return {topic:'goals',model:goal,text:'A meta precisa de '+money(deposit)+' por '+unitName(goal.timeUnit,1)+'. No orçamento indicado, sobram '+money(margin)+' nesse período.\n\n'+(deposit<=margin?'A quantia cabe nessa margem, antes de despesas não indicadas e imprevistos.':'A quantia ultrapassa essa margem em '+money(deposit-margin)+'. Podes prolongar o prazo, rever a meta ou ajustar gastos que não sejam essenciais.')};
+      }
+      return {topic:'goals',clarification:true,text:'Preciso do valor da meta, do saldo já guardado, do prazo e do rendimento e despesas do mesmo período para verificar se o plano cabe.'};
+    }
+    const rateIncome=field(t,'(?:recebo|ganho|rendimento(?: disponivel)?)'),rateSaving=field(t,'(?:guardar|guardo|poupo|poupanca)');
+    if(/qual.*(?:taxa|percentagem)|que percentagem|quanto.*(?:percentagem|por cento)/.test(n)&&rateIncome!==null&&rateSaving!==null)return evaluate({kind:'savingsrate',income:rateIncome,saving:rateSaving},'savingsrate');
+    if(/(?:qual|calcula).*taxa.*poupanca|(?:qual|que).*percentagem.*(?:guardei|poupei|poupanca)/.test(n)&&context?.model&&['budget','budgetitems'].includes(context.model.kind)&&!missing(context.model).length){const b=context.model;return evaluate({kind:'savingsrate',income:b.income,saving:b.income-(b.kind==='budgetitems'?extraMetrics(b).expense:b.expense)},'savingsrate');}
+    const arithmetic=arithmeticTurn(t);if(arithmetic)return arithmetic;
+    const prices=unitPrices(t);if(prices)return prices;
+    if(/gastar menos|evitar gastar|reduzir.*gasto/.test(n)&&/\d/.test(t)){
+      const amount=field(t,'(?:gastar menos|evitar gastar|reduzir gastos em)'),duration=t.match(new RegExp(NUM+'\\s*(dias?|semanas?|mes(?:es)?|anos?)\\b'));
+      const frequency=t.match(/por (dia|semana|mes|ano)\b/);
+      if(amount!==null&&duration&&frequency){const model={kind:'periodic',amount,unit:frequency[1],time:parse(duration[1]),timeUnit:unitId(duration[2])};const a=evaluate(model,'spendless');return {...a,text:'Se guardares a diferença em vez de a gastares noutra coisa:\n'+a.text};}
+    }
+    const budget=phraseBudget(value,context);if(budget)return budget.model?.kind==='budget'?(planningQuestion(value,context)||budget):budget;
+    let kind;
+    if(/(?:guardar|poupar|deposit|reforco)/.test(n)&&/juros|taxa/.test(n)&&/por mes|mensal|reforco/.test(n))kind='contributioninterest';
+    else if(/taxa real|juro real/.test(n)||/inflacao/.test(n)&&/taxa nominal|juro nominal/.test(n))kind='realrate';
+    else if(/poder de compra|valor real|a precos/.test(n)&&/\d/.test(t)&&/inflacao/.test(n))kind='realvalue';
+    else if(/desconto/.test(n)&&/\d/.test(t))kind='discount';
+    else if(/reserva|fundo de emergencia/.test(n)&&/calcular|calcula|quanto|cobrir|cobertura/.test(n)&&(/\d/.test(t)||/calcular|calcula/.test(n)))kind='reserve';
+    else if(/recuperacao|custa mais|custo adicional/.test(n)&&/\d/.test(t))kind='payback';
+    else if(/guardar|poupar/.test(n)&&/\d\s*%/.test(t)&&/recebo|ganho|rendimento|mesada/.test(n)&&!/taxa de poupanca/.test(n))kind='percentage';
+    else if(/seguro|despesa anual|preparar.*despesa/.test(n)&&/\d/.test(t)&&/reservar|guardar|preparar|quanto/.test(n))kind='annualreserve';
+    const old=context?.model;
+    if(kind){
+      const model={kind,...(kind==='contributioninterest'?{capital:0}:{}),...(['realvalue'].includes(kind)?{time:1,timeUnit:'ano'}:{})};
+      const changes=extraEdits(value,model,context);Object.assign(model,changes);
+      // Reuse only an explicitly continued exercise of the same kind.
+      if(old?.kind===kind&&/^(e|afinal)\b|nesse|neste|em vez de|volta|retoma/.test(n))return extraEvaluate({...old,...changes},context.topic);
+      if(kind==='discount'&&model.price===undefined)model.price=find(t,NUM+'\\s*(?:€|euros?)')??undefined;
+      if(kind==='annualreserve'&&model.time===undefined)model.time=12;
+      return extraEvaluate(model);
+    }
+    if(old&&extraKinds[old.kind]&&old.kind!=='budgetitems'){
+      if(old.kind==='contributioninterest'&&/^e\b/.test(n)&&/por semana|por dia|por ano/.test(n)&&!/taxa|juros|%/.test(t))return {topic:context.topic,model:old,clarification:true,text:'Este exercício trabalha com reforços mensais. Para mudar para depósitos semanais ou diários, seria necessário definir o calendário e a capitalização; não vou tratar as frequências como iguais.'};
+      const changed=extraEdits(value,old,context);
+      const top=rankings(n)[0]?.topic;
+      const follow=/^(e|afinal)\b|neste|nesse|isso|resultado|de onde|como cheg|quanto|qual|formula|exemplo|nao percebi|explica melhor/.test(n);
+      const switchTopic=top&&top.id!==context.topic&&/o que|explica |como poupar|diferenca|preciso de dicas/.test(n)&&!follow;
+      if(!switchTopic&&(context.pending||follow)&&Object.keys(changed).length&&!/de onde|porque|por que|significa|como cheg|como obt|representa/.test(n))return extraEvaluate({...old,...changed},context.topic);
+      if(!switchTopic&&/formula|como calcul|como cheg|resultado|de onde|quanto|qual.*(?:valor|taxa|total|juros|reforco|quantia|capital)|e (os|o|as|a) /.test(n))return valueAnswer(value,context)||extraEvaluate(old,context.topic);
+      if(!switchTopic&&/exemplo|nao percebi|explica melhor|mais simples/.test(n))return {...extraEvaluate(old,context.topic),text:'Com os dados deste exemplo:\n'+extraEvaluate(old,context.topic).text};
+    }
+    if(context&&!/\d/.test(t)&&!/de onde|como cheg/.test(n)){
+      const topic=topics.find(x=>x.id===context.topic),top=rankings(n)[0]?.topic;
+      if(topic?.questions&&(!top||top.id===topic.id||/^(e|mas)\b|nisso|isso/.test(n))){const facet=topic.questions.find(q=>q.patterns.every(p=>p.test(n)));if(facet)return {topic:topic.id,text:facet.text,model:context.model};}
+    }
+    // Numeric natural phrases are considered before generic word matches.
+    if(/\d/.test(t)&&!/tenho \d+ anos|idade|de onde|porque|por que|significa|como cheg|e os|e o /.test(n)){
+      const goal=field(t,'(?:quero juntar|juntar|quero ter|preciso de|meta(?: de)?|objetivo(?: de)?|custa|atingir|chegar aos?|alcancar)');
+      const initial=field(t,'(?:ja tenho|ja guardei|ja reservei|saldo inicial|comeco com)')??(goal!==null?field(t,'tenho'):null);
+      const period=t.match(new RegExp(NUM+'\\s*(?:€|euros?)?\\s*por (mes|semana|ano|dia)\\b'));
+      const duration=t.match(new RegExp(NUM+'\\s*(anos?|mes(?:es)?|semanas?|dias?)\\b'));
+      if(goal!==null&&/quanto tempo|quantos meses|quando.*(?:juntar|atingir|chegar)/.test(n)&&period){return evaluate({kind:'periodic',target:goal,amount:parse(period[1]),unit:period[2],time:0,timeUnit:period[2],initial:initial||0,task:'reach'},'goals');}
+      if(goal!==null&&duration&&!period&&!/taxa|juros|desconto/.test(n))return evaluate({kind:'goal',target:goal,time:parse(duration[1]),timeUnit:unitId(duration[2]),initial:initial||0},'goals');
+      if(period&&duration&&/guardar|poupar|juntar|depositar/.test(n)&&!/juros|impostos|comissoes/.test(n)&&!/^e\b/.test(n))return evaluate({kind:'periodic',amount:parse(period[1]),unit:period[2],time:parse(duration[1]),timeUnit:unitId(duration[2]),initial:initial||0},'saving');
+    }
+    return null;
+  }
+
   function createSession(){
     let active=null,history=[];
     function prepare(input,anchor){
-      const value=String(input).trim().slice(0,1000),text=normalize(value);
+      const value=naturalInput(String(input).trim().slice(0,1000)),text=normalize(value);
       let context=anchor && typeof anchor==='object'?anchor:active;
       if(typeof anchor==='string')context=history.slice().reverse().find(c=>c.topic===anchor) || {topic:anchor,text:''};
       let answer,retain=false;
       const topical=rankings(text),best=topical[0]?.topic;
       const follow=/\b(e se|e com|e durante|em vez de|afinal|corrige|nesse|neste|desse|deste|isso|esses|estes|esse|essa|ele|ela|anterior|antes|mesmo exemplo)\b/.test(text) || /^e\b/.test(text);
-      const mode=/\b(exemplo|exemplos)\b/.test(text)?'example':/formula|como (se )?calcula/.test(text)?'formula':/mais simples|simplifica|resume|resumo|outras palavras|outra forma|para uma crianca/.test(text)?'simple':/explica melhor|explicar melhor|nao (percebi|entendi)|mais detalhes|como assim|por que|porque|porque e que|por que motivo|para que serve|como (posso )?aplicar/.test(text)?'detail':null;
+      const mode=/\b(exemplo|exemplos)\b/.test(text)?'example':/formula|como (se )?calcula/.test(text)?'formula':/mais simples|simplifica|resume|resumo|outras palavras|outra forma|outra maneira|para uma crianca/.test(text)?'simple':/explica melhor|explicar melhor|nao (percebi|entendi)|mais detalhes|como assim|por que|porque|porque e que|por que motivo|para que serve|como (posso )?aplicar/.test(text)?'detail':null;
       const valuesIntent=/\b(quanto|qual|quais|valor|valores|porque|por que|de onde|como cheg\w*|como obt\w*|como calcul\w*|significa|representa|corresponde|como deu|como da|vem|vinha|receb\w*|guardou|guardava|poupava|sobrava|gastava)\b/.test(text) || /^e (os|as|o|a)\b/.test(text);
       const reference=/\b(exemplo|conta|calculo|ines|mesada|antes|anterior|esses|estes|esse|essa|ela|ele|isso)\b/.test(text);
       // An explicit reference can retrieve an earlier topic without carrying unrelated data over.
@@ -464,7 +699,7 @@
       else if(/^(obrigad[oa]|muito obrigad[oa]|valeu|obg|ok|okay|certo|entendi|percebi|sim)$/.test(text)){answer={text:/obrig|valeu|obg/.test(text)?'De nada! Se quiseres, podemos continuar este exemplo ou passar a outra pergunta.':'Certo. Podes continuar o exemplo ou fazer uma nova pergunta.',topic:context?.topic || null};retain=true;}
       else if(/^(esta errado|isso esta errado|nao e isso|nao foi isso|enganei me|nao)$/.test(text)){answer={text:context?.model?'Qual é o dado que queres corrigir? Indica o nome e o novo valor, por exemplo a quantia, o prazo ou a taxa.':'Que parte queres esclarecer? Podes reformular a pergunta.',topic:context?.topic || null,clarification:true};retain=true;}
       else if(/\b\d+(?:[.,]\d+)?e[+-]?\d+\b/i.test(value))answer={text:'Escreve os números por extenso em algarismos, sem notação científica, por exemplo 1000 ou 2,50.',topic:context?.topic || null,clarification:true};
-      else if(/guardar|poupar|juntar|depositos/i.test(text) && /com juros|juros de|juros a|com comissoes|com impostos/.test(text))answer={text:'Para combinar depósitos regulares com juros ou outros custos, faltam condições como as datas dos depósitos e a capitalização. Podemos fazer a soma dos depósitos sem juros, ou um exercício de juros simples ou compostos sobre um capital inicial.',topic:context?.topic || null,clarification:true};
+      else if(/guardar|poupar|juntar|depositos/i.test(text) && /com juros|juros de|juros a|com comissoes|com impostos/.test(text) && !/por mes|mensal|reforco/.test(text))answer={text:'Para combinar depósitos regulares com juros ou outros custos, faltam condições como as datas dos depósitos e a capitalização. Podemos fazer a soma dos depósitos sem juros, ou um exercício de juros simples ou compostos sobre um capital inicial.',topic:context?.topic || null,clarification:true};
       else if(/\b(pdf|apresentacao|slides|descarregar|baixar|download)\b/.test(text) || /^(ola|oi|bom dia|boa tarde|boa noite|hey)( tudo bem)?$/.test(text))answer=respond(value);
       else if(/\b(atual|atuais|hoje|agora|202[0-9]|203[0-9]|mais recente|neste momento)\b/.test(text) && /\b(taxa|pib|inflacao|desemprego|juro|divida|membros|valor)\b/.test(text))answer=respond(value);
       else if(/diferenca|diferencas|disting|compar|versus|\bvs\b/.test(text) && topical.length)answer=respond(value);
@@ -472,7 +707,9 @@
         const practical=!explicitNew?guideFollowup(value,context):null;
         const planned=planningQuestion(value,context);
         const full=calculate(value);
-        if(practical)answer=practical;
+        const smart=smartTurn(value,context,history);
+        if(smart)answer=smart;
+        else if(practical)answer=practical;
         else if(planned)answer=planned;
         else if(full?.model)answer=full;
         else if(context?.model && !explicitNew){
@@ -509,14 +746,16 @@
           const fresh=freshModel(value);
           if(fresh && (explicitNew || !context?.model || !follow))answer=evaluate(fresh);
         }
+        if(!answer && !context && /quanto.*(?:eram|era|ficava|teria|guardava)/.test(text))answer={text:'A que exemplo te referes? Indica os valores para eu calcular.',topic:null,clarification:true};
         if(!answer && !context && (mode && !best || (reference || /\d/.test(text)) && valuesIntent && !best))answer={text:'A que tema ou exemplo te referes? Escreve o tema ou os valores para eu continuar.',topic:null,clarification:true};
         if(!answer && context && reference && valuesIntent && !explicitNew)answer=valueAnswer(value,context) || {text:'A que parte do exemplo te referes? Indica o valor ou a frase que queres esclarecer.',topic:context.topic,clarification:true};
         if(!answer)answer=respond(value,explicitNew?null:context?.topic);
+        if(answer.fallback&&context&&follow&&!explicitNew)answer={topic:context.topic,model:context.model,pending:context.pending,askKey:context.askKey,clarification:true,text:'Queres esclarecer que parte do que estávamos a ver? Podes indicar o valor, a frase ou o dado que queres alterar.'};
       }
       if(answer.topic){
         const same=context?.topic===answer.topic;
         const model=answer.model || (retain && same?context.model:undefined);
-        answer.context={topic:answer.topic,text:answer.text,source:same && (!answer.model || answer.model===context.model)?context.source || context.text:answer.text,model:model?{...model}:undefined,pending:!!answer.pending,related:answer.related || (same?context.related:undefined),tipIndex:answer.tipIndex || 0};
+        answer.context={topic:answer.topic,text:answer.text,source:same && (!answer.model || answer.model===context.model)?context.source || context.text:answer.text,model:model?{...model}:undefined,pending:!!answer.pending,askKey:answer.askKey,related:answer.related || (same?context.related:undefined),tipIndex:answer.tipIndex || 0};
       }else answer.context=null;
       return answer;
     }
