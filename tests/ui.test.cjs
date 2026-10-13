@@ -25,7 +25,7 @@ assert.equal(els['chat-log'].children[0].children[1].textContent,'Olá! Em que t
 els['chat-input'].value='O que é a poupança?';els['chat-form'].emit('submit',{preventDefault(){}});
 assert.equal(scheduled[0].delay,7500);assert.equal(send.disabled,true);assert.equal(els['chat-log'].children.length,2);assert.equal(els['chat-input'].value,'');
 els['chat-input'].value='outra pergunta';els['chat-form'].emit('submit',{preventDefault(){}});assert.equal(scheduled.length,1);assert.equal(els['chat-input'].value,'outra pergunta');
-scheduled[0].cb();assert.equal(send.disabled,false);assert.equal(els['chat-log'].children.length,3);assert.match(els['chat-log'].children[2].children[1].textContent,/Poupar/);
+scheduled[0].cb();assert.equal(send.disabled,false);assert.equal(els['chat-log'].children.length,3);assert.match(els['chat-log'].children[2].children[1].textContent,/Poupar|poupança/);
 let prevented=false;els['chat-input'].emit('keydown',{key:'Enter',shiftKey:true,preventDefault(){prevented=true;}});assert.equal(prevented,false);
 prevented=false;els['chat-input'].emit('keydown',{key:'Enter',shiftKey:false,isComposing:true,preventDefault(){prevented=true;}});assert.equal(prevented,false);
 els['chat-input'].value='Dá-me um exemplo';els['chat-input'].emit('keydown',{key:'Enter',shiftKey:false,isComposing:false,preventDefault(){prevented=true;}});assert.equal(prevented,true);assert.ok(scheduled[1].delay>=500 && scheduled[1].delay<1000);

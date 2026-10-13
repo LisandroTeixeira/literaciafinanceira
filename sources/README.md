@@ -10,3 +10,7 @@ Foram consultadas também páginas educativas oficiais:
 - https://www.todoscontam.pt/pt-pt/juro-simples-e-juro-composto
 
 Este diretório está fora de `docs`: não é publicado pela configuração GitHub Pages indicada no README. O site não consulta o PDF para cada resposta; usa o conteúdo redigido e as regras locais incluídos no projeto.
+
+## Apresentação atual
+
+`apresentacao-conteudos.json` liga perguntas e respostas aos 14 slides do PDF em `docs/pdf/apresentacao-poupanca.pdf`. A integração foi testada através da API real de conversas, incluindo seguimentos e exemplos de despesas. O PDF dos slides foi copiado sem alterar o conteúdo.

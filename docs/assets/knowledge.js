@@ -1269,5 +1269,839 @@
   };
   Object.entries(phraseFamilies).forEach(([id,groups])=>{const t=topics.find(t=>t.id===id);t.intents=[...(t.intents||[]),...groups];});
   const deposited=topics.find(t=>t.id==='deposits');deposited.questions=[{patterns:[/melhor|escolher|banco/],text:'Para comparar locais onde guardar, vê os custos, a possibilidade de levantar, a remuneração e as condições de segurança aplicáveis. O melhor depende do objetivo e do prazo. Não tenho uma comparação atual de bancos para escolher um por ti.'}];
+  // Perguntas e conteúdos dos 14 slides atuais, com rastreio por página.
+  root.SavingsPresentation=Object.freeze({
+  "documento": "O que é a poupança.pdf",
+  "paginas": 14,
+  "estado": "Integrado no chatbot e verificado com perguntas da apresentação.",
+  "autor": "Rui Faria e Lisandro Teixeira",
+  "regras": [
+    "Distinguir uma nova pergunta de um seguimento ao tema ou exemplo ativo.",
+    "Usar o contexto do caso para classificar despesas; não generalizar versões opcionais para todas as despesas semelhantes.",
+    "Usar os cálculos já existentes, pedir dados em falta e manter as unidades temporais compatíveis.",
+    "Não assumir valores, juros ou regras bancárias atuais.",
+    "Não prometer guardar perguntas nem contactar os autores sem função implementada.",
+    "Só tratar a frase do slide 7 como orientação; assegurar despesas essenciais."
+  ],
+  "topicos": [
+    {
+      "id": "apresentacao",
+      "slides": [
+        1,
+        2
+      ],
+      "perguntas": [
+        "Qual é o tema do trabalho?",
+        "Quem fez a apresentação?",
+        "O que vamos aprender?"
+      ],
+      "resposta": "O trabalho chama-se «O que é a poupança?» e é de Rui Faria e Lisandro Teixeira. Explica o que é poupar, porque é importante, como criar hábitos, onde guardar dinheiro e como distinguir despesas necessárias de supérfluas.",
+      "seguimentos": {},
+      "topic": "presentation_intro"
+    },
+    {
+      "id": "definicao",
+      "slides": [
+        2,
+        3
+      ],
+      "perguntas": [
+        "O que é a poupança?",
+        "Poupar significa o quê?",
+        "O que acontece ao dinheiro que não gasto?"
+      ],
+      "resposta": "A poupança é a parte do rendimento que não utilizas no consumo e guardas para o futuro. Pode servir para um objetivo, para segurança financeira ou para uma despesa inesperada.",
+      "seguimentos": {
+        "Dá um exemplo": "Se recebes 50 € e gastas 40 €, podes guardar os 10 € que restam, se não houver outras despesas."
+      },
+      "topic": "saving"
+    },
+    {
+      "id": "formula",
+      "slides": [
+        3
+      ],
+      "perguntas": [
+        "Qual é a fórmula da poupança?",
+        "Como se calcula a poupança?",
+        "Rendimento menos despesa dá o quê?"
+      ],
+      "resposta": "Na apresentação: poupança = rendimento − despesa. Compara valores do mesmo período. Num orçamento simples, 100 € recebidos menos 80 € gastos deixam 20 €. Se as despesas forem maiores do que o rendimento, o saldo é negativo.",
+      "seguimentos": {
+        "O rendimento é o quê?": "É o dinheiro que recebes no período considerado. Usa o dinheiro efetivamente disponível para o orçamento.",
+        "As despesas são o quê?": "São os valores gastos no mesmo período. Não mistures diretamente valores mensais e anuais."
+      },
+      "topic": "saving"
+    },
+    {
+      "id": "importancia",
+      "slides": [
+        4
+      ],
+      "perguntas": [
+        "Porque é importante poupar?",
+        "Quais são as vantagens da poupança?",
+        "Para que serve guardar dinheiro?"
+      ],
+      "resposta": "Poupar pode dar mais segurança financeira, ajudar a enfrentar imprevistos, permitir concretizar objetivos e preparar o futuro. A utilidade depende das necessidades e das possibilidades de cada pessoa.",
+      "seguimentos": {},
+      "topic": "importance"
+    },
+    {
+      "id": "seguranca",
+      "slides": [
+        4
+      ],
+      "perguntas": [
+        "Como é que a poupança dá segurança?",
+        "Dinheiro guardado ajuda em quê?"
+      ],
+      "resposta": "Uma reserva dá margem para pagar uma despesa necessária sem depender imediatamente de novo rendimento ou de um empréstimo. Não elimina todos os riscos, mas pode ajudar a enfrentar uma dificuldade.",
+      "seguimentos": {},
+      "topic": "importance"
+    },
+    {
+      "id": "imprevistos",
+      "slides": [
+        4,
+        7,
+        9
+      ],
+      "perguntas": [
+        "O que é um imprevisto?",
+        "Dá exemplos de emergências",
+        "Para que serve uma reserva de emergência?"
+      ],
+      "resposta": "Um imprevisto é uma situação que não estava planeada, como uma avaria num equipamento necessário ou uma quebra de rendimento. Uma reserva serve para ajudar a pagar essas necessidades.",
+      "seguimentos": {
+        "Uma viagem é uma emergência?": "Uma viagem de lazer planeada é um objetivo; não é, por si só, uma emergência. Uma deslocação urgente e necessária pode ter outro contexto.",
+        "Qual é o valor certo?": "Não existe uma quantia obrigatória para todos. O valor depende das despesas necessárias, da estabilidade do rendimento e da possibilidade de guardar."
+      },
+      "topic": "emergency"
+    },
+    {
+      "id": "habitos",
+      "slides": [
+        5
+      ],
+      "perguntas": [
+        "Como criar hábitos de poupança?",
+        "Quais são os três passos?",
+        "Por onde começar?"
+      ],
+      "resposta": "Os três hábitos apresentados são: 1) definir um objetivo; 2) guardar regularmente uma pequena quantia possível; 3) controlar os gastos, evitar compras por impulso e dar prioridade ao necessário.",
+      "seguimentos": {},
+      "topic": "habits"
+    },
+    {
+      "id": "objetivo",
+      "slides": [
+        5,
+        7,
+        8
+      ],
+      "perguntas": [
+        "Como escolher um objetivo?",
+        "Qual deve ser o destino da poupança?",
+        "Preciso de uma meta?"
+      ],
+      "resposta": "Escolhe algo concreto, estima quanto custa e decide um prazo possível. Depois compara o valor por juntar com o que podes guardar. O objetivo pode ser uma compra, uma despesa futura ou uma reserva.",
+      "seguimentos": {
+        "E se não conseguir no prazo?": "Podes aumentar o prazo, rever o preço ou escolher uma meta menor. Não retires dinheiro de necessidades essenciais só para cumprir a data.",
+        "Já tenho algum dinheiro": "Para fazer a conta, indica o preço da meta, quanto já guardaste e o prazo. Só é preciso juntar a diferença que falta."
+      },
+      "topic": "goals"
+    },
+    {
+      "id": "regularidade",
+      "slides": [
+        5,
+        8
+      ],
+      "perguntas": [
+        "Devo poupar todas as semanas?",
+        "É melhor poupar semanalmente ou mensalmente?",
+        "Tenho de guardar todos os dias?"
+      ],
+      "resposta": "Podes escolher uma frequência que combine com a forma como recebes dinheiro. O trabalho dá semanas e meses como exemplos. A quantia deve caber no orçamento; não tens de poupar todos os dias.",
+      "seguimentos": {},
+      "topic": "savingfrequency"
+    },
+    {
+      "id": "contrologastos",
+      "slides": [
+        5,
+        8
+      ],
+      "perguntas": [
+        "Como controlar os gastos?",
+        "Como sei para onde vai o dinheiro?",
+        "Como deixar de gastar tudo?"
+      ],
+      "resposta": "Anota os gastos, identifica o que é necessário e define um limite possível para compras opcionais. Revê os valores regularmente, incluindo os gastos pequenos.",
+      "seguimentos": {},
+      "topic": "selfcontrol"
+    },
+    {
+      "id": "impulso",
+      "slides": [
+        5,
+        8
+      ],
+      "perguntas": [
+        "O que é uma compra por impulso?",
+        "Como evitar compras por impulso?",
+        "Comprar só porque está em promoção é poupar?"
+      ],
+      "resposta": "Uma compra por impulso é feita sem planeamento, muitas vezes por vontade momentânea. Uma lista e uma pausa antes de decidir ajudam. Uma promoção não torna necessária uma compra e só cria dinheiro guardado se não gastares a diferença noutra coisa.",
+      "seguimentos": {},
+      "topic": "impulse"
+    },
+    {
+      "id": "destinos",
+      "slides": [
+        6,
+        7
+      ],
+      "perguntas": [
+        "Quais são os destinos da poupança?",
+        "Para que posso juntar dinheiro?",
+        "Que objetivos aparecem no trabalho?"
+      ],
+      "resposta": "Na apresentação aparecem casa, educação, viagens, carro, saúde, emergências e imprevistos, equipamentos como telemóvel ou computador e preparação do futuro.",
+      "seguimentos": {
+        "São os únicos destinos?": "São exemplos da apresentação. Podes ter outros objetivos, desde que sejam claros e caibam no orçamento.",
+        "Qual vem primeiro?": "Dá prioridade às necessidades essenciais e considera uma reserva para dificuldades. Entre outros objetivos, compara a urgência, o custo e o prazo."
+      },
+      "topic": "destinations"
+    },
+    {
+      "id": "casacarro",
+      "slides": [
+        7
+      ],
+      "perguntas": [
+        "Porque poupar para uma casa?",
+        "Como poupar para comprar um carro?"
+      ],
+      "resposta": "Casa e carro são exemplos de objetivos que podem exigir uma quantia elevada. Define o montante que queres preparar, o dinheiro já guardado e o prazo. Considera também as despesas de utilização, como manutenção e outros encargos.",
+      "seguimentos": {},
+      "topic": "goals"
+    },
+    {
+      "id": "educacao",
+      "slides": [
+        7
+      ],
+      "perguntas": [
+        "A poupança pode ser para estudar?",
+        "Porque é que a educação é um destino?"
+      ],
+      "resposta": "Pode preparar despesas com material, cursos ou formação. Estima os custos necessários e o prazo, em vez de decidir apenas pelo dinheiro de um único mês.",
+      "seguimentos": {},
+      "topic": "goals"
+    },
+    {
+      "id": "viagens",
+      "slides": [
+        7
+      ],
+      "perguntas": [
+        "Posso poupar para viajar?",
+        "Viagens são necessárias ou supérfluas?"
+      ],
+      "resposta": "Uma viagem de lazer pode ser um objetivo de poupança e costuma ser uma despesa opcional. Uma deslocação necessária por trabalho ou outra necessidade tem um contexto diferente. O objetivo não deve tirar dinheiro a despesas essenciais.",
+      "seguimentos": {},
+      "topic": "destinations"
+    },
+    {
+      "id": "saude",
+      "slides": [
+        7,
+        12
+      ],
+      "perguntas": [
+        "Pode-se poupar para saúde?",
+        "Medicamentos são supérfluos?"
+      ],
+      "resposta": "A saúde aparece como destino da poupança, e medicamentos necessários aparecem como despesa indispensável. Preparar uma reserva pode ajudar; não adies cuidados necessários só para aumentar o dinheiro guardado.",
+      "seguimentos": {},
+      "topic": "emergency"
+    },
+    {
+      "id": "equipamentos",
+      "slides": [
+        7,
+        12
+      ],
+      "perguntas": [
+        "Um telemóvel é necessário?",
+        "Computadores são um objetivo?",
+        "Trocar de telemóvel é supérfluo?"
+      ],
+      "resposta": "Um telemóvel ou computador pode ser necessário para estudo ou trabalho. A apresentação considera supérfluo trocar de telemóvel sem necessidade. É a função e o motivo da compra que ajudam a distinguir, não apenas o nome do objeto.",
+      "seguimentos": {},
+      "topic": "expenseclassification"
+    },
+    {
+      "id": "futuro",
+      "slides": [
+        4,
+        7,
+        14
+      ],
+      "perguntas": [
+        "Como poupar protege o futuro?",
+        "Para que serve preparar o futuro?"
+      ],
+      "resposta": "Guardar uma quantia possível pode ajudar a preparar uma fase com menos rendimento ou uma despesa futura. Pensa num objetivo concreto e revê o plano quando mudarem as necessidades.",
+      "seguimentos": {},
+      "topic": "importance"
+    },
+    {
+      "id": "frase",
+      "slides": [
+        7
+      ],
+      "perguntas": [
+        "O que quer dizer a frase do slide?",
+        "O que significa gastar o que sobra depois de poupar?",
+        "Explica a frase de Warren Buffett"
+      ],
+      "resposta": "A frase apresentada incentiva a reservar uma quantia antes de gastar tudo, tornando a poupança uma parte do plano. Isso só funciona com uma quantia que caiba no orçamento, depois de assegurar o necessário.",
+      "seguimentos": {
+        "É obrigatório poupar antes de tudo?": "Não. As necessidades essenciais têm de ser asseguradas. A frase é uma orientação para planear; não é uma obrigação de guardar dinheiro a qualquer custo."
+      },
+      "topic": "savingquote"
+    },
+    {
+      "id": "dicas",
+      "slides": [
+        8
+      ],
+      "perguntas": [
+        "Quais são as dicas para poupar?",
+        "Resume as seis dicas",
+        "O que posso fazer no dia a dia?"
+      ],
+      "resposta": "As seis dicas do trabalho são: guardar uma parte quando recebes dinheiro; fazer uma lista de compras; evitar pequenos gastos desnecessários; definir um objetivo; anotar despesas; usar um mealheiro para separar a poupança.",
+      "seguimentos": {},
+      "topic": "savingtips"
+    },
+    {
+      "id": "pequenosgastos",
+      "slides": [
+        8,
+        14
+      ],
+      "perguntas": [
+        "Gastos pequenos fazem diferença?",
+        "Porque evitar pequenas compras desnecessárias?"
+      ],
+      "resposta": "Gastos pequenos repetidos podem somar uma quantia relevante. Por exemplo, 2 € por dia durante 30 dias somam 60 €. Se evitares esse gasto e guardares a diferença, ela pode ajudar um objetivo.",
+      "seguimentos": {},
+      "topic": "smallcosts"
+    },
+    {
+      "id": "receberguardar",
+      "slides": [
+        8
+      ],
+      "perguntas": [
+        "Devo guardar dinheiro quando recebo?",
+        "Porque separar logo uma parte?"
+      ],
+      "resposta": "Separar uma quantia possível quando recebes dinheiro pode ajudar a não a gastar por impulso. Primeiro, confirma as despesas necessárias e escolhe um valor que consigas manter.",
+      "seguimentos": {},
+      "topic": "autosave"
+    },
+    {
+      "id": "listacompras",
+      "slides": [
+        8
+      ],
+      "perguntas": [
+        "Porque fazer uma lista?",
+        "Como uma lista ajuda a poupar?"
+      ],
+      "resposta": "A lista ajuda a preparar o que precisas e a evitar acrescentar artigos só por vontade momentânea. Confirma o que já tens e compara o custo das opções adequadas.",
+      "seguimentos": {},
+      "topic": "impulse"
+    },
+    {
+      "id": "registo",
+      "slides": [
+        8
+      ],
+      "perguntas": [
+        "Tenho de anotar os gastos?",
+        "O que devo registar?"
+      ],
+      "resposta": "Podes registar a data, o valor e a finalidade de cada gasto, num caderno ou registo simples. No fim do período, soma e compara com o rendimento; assim percebes onde podes ajustar.",
+      "seguimentos": {},
+      "topic": "expenselog"
+    },
+    {
+      "id": "naopoupar",
+      "slides": [
+        9
+      ],
+      "perguntas": [
+        "O que acontece quando não poupamos?",
+        "Quais são os riscos de não ter poupança?",
+        "Não poupar pode causar problemas?"
+      ],
+      "resposta": "Segundo a apresentação, pode ser mais difícil enfrentar um imprevisto e alcançar objetivos, e pode aumentar a dependência de dívida. Isso não significa que quem não consegue poupar seja irresponsável: por vezes o rendimento só chega para o necessário.",
+      "seguimentos": {},
+      "topic": "notsaving"
+    },
+    {
+      "id": "dividas",
+      "slides": [
+        9
+      ],
+      "perguntas": [
+        "O que é um ciclo de dívidas?",
+        "Como a poupança ajuda a evitar dívida?"
+      ],
+      "resposta": "Quando é preciso pedir dinheiro emprestado repetidamente para suportar despesas, os pagamentos e juros podem reduzir a margem futura e levar a novos empréstimos. Uma reserva pode reduzir essa necessidade, mas não resolve sozinha a falta de rendimento.",
+      "seguimentos": {},
+      "topic": "credit"
+    },
+    {
+      "id": "ondeguardar",
+      "slides": [
+        10
+      ],
+      "perguntas": [
+        "Onde posso guardar as poupanças?",
+        "Quais são os locais do slide?",
+        "É melhor mealheiro ou conta bancária?"
+      ],
+      "resposta": "O trabalho apresenta o mealheiro e a conta bancária. O mealheiro facilita separar pequenas quantias, mas pode ser perdido, roubado ou danificado. Numa conta, o dinheiro e os movimentos ficam registados. Compara as condições, os custos e o acesso ao dinheiro.",
+      "seguimentos": {},
+      "topic": "deposits"
+    },
+    {
+      "id": "mealheiro",
+      "slides": [
+        8,
+        10
+      ],
+      "perguntas": [
+        "Quais são as vantagens do mealheiro?",
+        "O mealheiro tem riscos?",
+        "Dinheiro no mealheiro rende juros?"
+      ],
+      "resposta": "O mealheiro é simples e pode tornar visível o dinheiro guardado. Não gera juros por si só. Como refere o trabalho, pode ser roubado, danificado ou perdido.",
+      "seguimentos": {},
+      "topic": "piggybank"
+    },
+    {
+      "id": "contabancaria",
+      "slides": [
+        10
+      ],
+      "perguntas": [
+        "Porque guardar numa conta bancária?",
+        "O banco regista as transferências?",
+        "Uma conta dá sempre juros?"
+      ],
+      "resposta": "Uma conta permite consultar o saldo e os movimentos, incluindo transferências. A remuneração, os custos e as condições de levantamento dependem da conta ou do produto; não é correto assumir que todas dão juros.",
+      "seguimentos": {},
+      "topic": "bankaccount"
+    },
+    {
+      "id": "despesasdistincao",
+      "slides": [
+        11,
+        12
+      ],
+      "perguntas": [
+        "O que são despesas necessárias e supérfluas?",
+        "Como distinguir indispensável e dispensável?",
+        "Qual é a diferença?"
+      ],
+      "resposta": "Uma despesa necessária serve uma necessidade importante, como alimentação, habitação ou saúde. Uma despesa supérflua pode ser adiada ou dispensada sem comprometer essas necessidades. O contexto pode mudar a classificação.",
+      "seguimentos": {},
+      "topic": "expenseclassification"
+    },
+    {
+      "id": "necessarias",
+      "slides": [
+        11,
+        12
+      ],
+      "perguntas": [
+        "Quais são as despesas necessárias do trabalho?",
+        "Dá exemplos de despesas indispensáveis",
+        "O que escrever na coluna A?"
+      ],
+      "resposta": "No trabalho: renda ou prestação da habitação; alimentação; água, luz e gás; transportes para escola ou trabalho; saúde e medicamentos necessários; roupa básica; produtos de higiene.",
+      "seguimentos": {},
+      "topic": "necessaryexpenses"
+    },
+    {
+      "id": "superfluas",
+      "slides": [
+        11,
+        12
+      ],
+      "perguntas": [
+        "Quais são as despesas supérfluas do trabalho?",
+        "Dá exemplos de despesas dispensáveis",
+        "O que escrever na coluna B?"
+      ],
+      "resposta": "No trabalho: roupa de marca por preferência; trocar de telemóvel sem necessidade; comer fora frequentemente por opção; joias; outros acessórios de luxo.",
+      "seguimentos": {},
+      "topic": "superfluousexpenses"
+    },
+    {
+      "id": "roupa",
+      "slides": [
+        12
+      ],
+      "perguntas": [
+        "Roupa é sempre necessária?",
+        "Roupa de marca é uma necessidade?"
+      ],
+      "resposta": "Roupa básica adequada pode ser necessária. Escolher uma marca apenas por preferência ou estatuto é o exemplo supérfluo da apresentação. O mesmo tipo de bem pode ter uma versão essencial e outra opcional.",
+      "seguimentos": {},
+      "topic": "expenseclassification"
+    },
+    {
+      "id": "comerfora",
+      "slides": [
+        12
+      ],
+      "perguntas": [
+        "Comer fora é sempre supérfluo?",
+        "Porque é que restaurantes são dispensáveis?"
+      ],
+      "resposta": "O exemplo do trabalho é comer fora frequentemente por opção. Alimentação é necessária, mas escolher lazer mais caro quando existe uma alternativa adequada pode ser opcional. Nem todas as refeições fora têm o mesmo contexto.",
+      "seguimentos": {},
+      "topic": "expenseclassification"
+    },
+    {
+      "id": "classificarexercicio",
+      "slides": [
+        11,
+        12
+      ],
+      "perguntas": [
+        "Como completar a tabela?",
+        "Como responder ao exercício das despesas?"
+      ],
+      "resposta": "Coloca na coluna de necessárias os gastos essenciais para habitação, alimentação, serviços básicos, deslocações necessárias, saúde, roupa básica e higiene. Na de supérfluas, coloca os exemplos opcionais de marca, trocas sem necessidade, lazer frequente e luxo. Se um caso for ambíguo, explica o contexto.",
+      "seguimentos": {},
+      "topic": "expenseclassification"
+    },
+    {
+      "id": "duvidasqr",
+      "slides": [
+        13
+      ],
+      "perguntas": [
+        "Como rever a apresentação?",
+        "O que faz o QR Code?",
+        "Onde posso fazer perguntas?"
+      ],
+      "resposta": "O slide convida a fazer perguntas e a usar o QR Code para continuar e rever o trabalho. No site, a secção Apresentação permite abrir e descarregar o PDF; o chat recebe as dúvidas.",
+      "seguimentos": {},
+      "topic": "presentation_intro"
+    },
+    {
+      "id": "conclusao",
+      "slides": [
+        14
+      ],
+      "perguntas": [
+        "Qual é a conclusão?",
+        "Qual é a mensagem principal?",
+        "Resume o trabalho"
+      ],
+      "resposta": "Poupar ajuda a preparar o futuro e os imprevistos. Pequenas quantias podem fazer diferença quando são possíveis. O objetivo é usar o dinheiro com mais responsabilidade e organização, respeitando as necessidades e o orçamento.",
+      "seguimentos": {},
+      "topic": "presentation_summary"
+    }
+  ],
+  "despesas_do_slide_12": [
+    {
+      "despesa": "renda da casa",
+      "classificacao": "necessária",
+      "motivo": "Assegura habitação."
+    },
+    {
+      "despesa": "prestação da habitação",
+      "classificacao": "necessária",
+      "motivo": "É um encargo de habitação."
+    },
+    {
+      "despesa": "alimentação",
+      "classificacao": "necessária",
+      "motivo": "Satisfaz uma necessidade básica; o tipo e o custo das escolhas podem variar."
+    },
+    {
+      "despesa": "água, luz e gás",
+      "classificacao": "necessária",
+      "motivo": "São serviços básicos."
+    },
+    {
+      "despesa": "transportes para escola ou trabalho",
+      "classificacao": "necessária",
+      "motivo": "Asseguram uma deslocação necessária."
+    },
+    {
+      "despesa": "saúde e medicamentos necessários",
+      "classificacao": "necessária",
+      "motivo": "Correspondem a cuidados necessários."
+    },
+    {
+      "despesa": "roupa básica",
+      "classificacao": "necessária",
+      "motivo": "Assegura vestuário adequado."
+    },
+    {
+      "despesa": "produtos de higiene",
+      "classificacao": "necessária",
+      "motivo": "Respondem a necessidades de higiene."
+    },
+    {
+      "despesa": "roupa de marca por preferência",
+      "classificacao": "supérflua",
+      "motivo": "A preferência pela marca pode ser dispensada, mantendo uma alternativa adequada."
+    },
+    {
+      "despesa": "trocar de telemóvel sem necessidade",
+      "classificacao": "supérflua",
+      "motivo": "O equipamento atual continua a cumprir a função necessária."
+    },
+    {
+      "despesa": "comer fora frequentemente por opção",
+      "classificacao": "supérflua",
+      "motivo": "É uma escolha opcional no exemplo da apresentação."
+    },
+    {
+      "despesa": "joias",
+      "classificacao": "supérflua",
+      "motivo": "Não correspondem a uma necessidade essencial no contexto do exercício."
+    },
+    {
+      "despesa": "acessórios de luxo",
+      "classificacao": "supérflua",
+      "motivo": "A versão de luxo é dispensável no exemplo."
+    }
+  ],
+  "sourcePath": "pdf/apresentacao-poupanca.pdf",
+  "listas": {
+    "habitos": [
+      "Definir um objetivo e o destino da poupança.",
+      "Guardar regularmente uma pequena quantia possível, semanalmente ou mensalmente.",
+      "Controlar gastos, evitar compras por impulso e priorizar necessidades."
+    ],
+    "dicas": [
+      "Guardar uma parte do dinheiro quando o recebes, se houver margem depois do necessário.",
+      "Fazer uma lista antes de ir às compras.",
+      "Evitar pequenos gastos desnecessários que se acumulam.",
+      "Definir um objetivo concreto.",
+      "Anotar os gastos para perceber onde vai o dinheiro.",
+      "Usar um mealheiro para separar pequenas quantias, tendo em conta os seus riscos."
+    ]
+  }
+});
+  const presentationTopics=[
+  {
+    "id": "presentation_intro",
+    "label": "A apresentação sobre poupança",
+    "category": "Poupança",
+    "aliases": [
+      "tema do trabalho",
+      "autores do trabalho",
+      "quem fez o trabalho"
+    ],
+    "answer": "O trabalho chama-se «O que é a poupança?» e é de Rui Faria e Lisandro Teixeira. Explica o que é poupar, porque é importante, como criar hábitos, onde guardar dinheiro e como distinguir despesas necessárias de supérfluas.",
+    "detail": "Este conteúdo está explicado nos slides 1, 2 da apresentação. A resposta pode ser aprofundada com um exemplo.",
+    "example": "A apresentação é de Rui Faria e Lisandro Teixeira e tem 14 slides.",
+    "formula": "",
+    "presentationSlides": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": "destinations",
+    "label": "Destinos da poupança",
+    "category": "Poupança",
+    "aliases": [
+      "destinos da poupanca",
+      "destino da poupanca",
+      "para que juntar dinheiro"
+    ],
+    "answer": "Na apresentação aparecem casa, educação, viagens, carro, saúde, emergências e imprevistos, equipamentos como telemóvel ou computador e preparação do futuro.",
+    "detail": "Este conteúdo está explicado nos slides 6, 7 da apresentação. A resposta pode ser aprofundada com um exemplo.",
+    "example": "Juntar dinheiro para material escolar é um objetivo de educação; uma reserva para uma avaria tem a função de enfrentar um imprevisto.",
+    "formula": "",
+    "presentationSlides": [
+      6,
+      7
+    ]
+  },
+  {
+    "id": "savingquote",
+    "label": "A frase sobre poupar antes de gastar",
+    "category": "Poupança",
+    "aliases": [
+      "frase de warren buffett",
+      "frase sobre poupar",
+      "poupar antes de gastar"
+    ],
+    "answer": "A frase apresentada incentiva a reservar uma quantia antes de gastar tudo, tornando a poupança uma parte do plano. Isso só funciona com uma quantia que caiba no orçamento, depois de assegurar o necessário.",
+    "detail": "Este conteúdo está explicado nos slides 7 da apresentação. A resposta pode ser aprofundada com um exemplo.",
+    "example": "Depois de assegurar o necessário, separar uma pequena quantia possível ajuda a não a gastar por impulso.",
+    "formula": "",
+    "presentationSlides": [
+      7
+    ]
+  },
+  {
+    "id": "savingtips",
+    "label": "As seis dicas para poupar",
+    "category": "Poupança",
+    "aliases": [
+      "seis dicas",
+      "dicas da apresentacao",
+      "dicas do trabalho"
+    ],
+    "answer": "As seis dicas do trabalho são: guardar uma parte quando recebes dinheiro; fazer uma lista de compras; evitar pequenos gastos desnecessários; definir um objetivo; anotar despesas; usar um mealheiro para separar a poupança.",
+    "detail": "Este conteúdo está explicado nos slides 8 da apresentação. A resposta pode ser aprofundada com um exemplo.",
+    "example": "Uma lista e um registo de gastos ajudam a acompanhar uma compra planeada.",
+    "formula": "",
+    "presentationSlides": [
+      8
+    ]
+  },
+  {
+    "id": "notsaving",
+    "label": "O que acontece quando não poupamos?",
+    "category": "Poupança",
+    "aliases": [
+      "quando nao poupamos",
+      "riscos de nao poupar",
+      "consequencias de nao poupar"
+    ],
+    "answer": "Segundo a apresentação, pode ser mais difícil enfrentar um imprevisto e alcançar objetivos, e pode aumentar a dependência de dívida. Isso não significa que quem não consegue poupar seja irresponsável: por vezes o rendimento só chega para o necessário.",
+    "detail": "Este conteúdo está explicado nos slides 9 da apresentação. A resposta pode ser aprofundada com um exemplo.",
+    "example": "Uma avaria pode exigir utilizar uma reserva; sem ela, poderá ser necessário procurar outra forma de pagar.",
+    "formula": "",
+    "presentationSlides": [
+      9
+    ]
+  },
+  {
+    "id": "piggybank",
+    "label": "Guardar dinheiro num mealheiro",
+    "category": "Poupança",
+    "aliases": [
+      "riscos do mealheiro",
+      "vantagens do mealheiro"
+    ],
+    "answer": "O mealheiro é simples e pode tornar visível o dinheiro guardado. Não gera juros por si só. Como refere o trabalho, pode ser roubado, danificado ou perdido.",
+    "detail": "Este conteúdo está explicado nos slides 8, 10 da apresentação. A resposta pode ser aprofundada com um exemplo.",
+    "example": "Separar moedas num mealheiro ajuda a acompanhar um objetivo, mas o mealheiro pode ser perdido.",
+    "formula": "",
+    "presentationSlides": [
+      8,
+      10
+    ]
+  },
+  {
+    "id": "bankaccount",
+    "label": "Guardar dinheiro numa conta bancária",
+    "category": "Poupança",
+    "aliases": [
+      "dinheiro numa conta bancaria",
+      "movimentos da conta"
+    ],
+    "answer": "Uma conta permite consultar o saldo e os movimentos, incluindo transferências. A remuneração, os custos e as condições de levantamento dependem da conta ou do produto; não é correto assumir que todas dão juros.",
+    "detail": "Este conteúdo está explicado nos slides 10 da apresentação. A resposta pode ser aprofundada com um exemplo.",
+    "example": "Consultar o extrato permite verificar o saldo e as transferências.",
+    "formula": "",
+    "presentationSlides": [
+      10
+    ]
+  },
+  {
+    "id": "expenseclassification",
+    "label": "Classificar despesas necessárias e supérfluas",
+    "category": "Poupança",
+    "aliases": [
+      "necessario ou superfluo",
+      "classificar despesas",
+      "tabela das despesas"
+    ],
+    "answer": "Uma despesa necessária serve uma necessidade importante, como alimentação, habitação ou saúde. Uma despesa supérflua pode ser adiada ou dispensada sem comprometer essas necessidades. O contexto pode mudar a classificação.",
+    "detail": "Este conteúdo está explicado nos slides 11, 12 da apresentação. A resposta pode ser aprofundada com um exemplo.",
+    "example": "Roupa básica pode ser necessária; escolher uma marca apenas por preferência pode ser dispensável.",
+    "formula": "",
+    "presentationSlides": [
+      11,
+      12
+    ]
+  },
+  {
+    "id": "necessaryexpenses",
+    "label": "Despesas necessárias",
+    "category": "Poupança",
+    "aliases": [
+      "despesas necessarias",
+      "despesas indispensaveis",
+      "coluna a"
+    ],
+    "answer": "No trabalho: renda ou prestação da habitação; alimentação; água, luz e gás; transportes para escola ou trabalho; saúde e medicamentos necessários; roupa básica; produtos de higiene.",
+    "detail": "Este conteúdo está explicado nos slides 11, 12 da apresentação. A resposta pode ser aprofundada com um exemplo.",
+    "example": "Alimentação básica e transportes necessários para a escola são despesas necessárias.",
+    "formula": "",
+    "presentationSlides": [
+      11,
+      12
+    ]
+  },
+  {
+    "id": "superfluousexpenses",
+    "label": "Despesas supérfluas",
+    "category": "Poupança",
+    "aliases": [
+      "despesas superfluas",
+      "despesas dispensaveis",
+      "coluna b"
+    ],
+    "answer": "No trabalho: roupa de marca por preferência; trocar de telemóvel sem necessidade; comer fora frequentemente por opção; joias; outros acessórios de luxo.",
+    "detail": "Este conteúdo está explicado nos slides 11, 12 da apresentação. A resposta pode ser aprofundada com um exemplo.",
+    "example": "Trocar um telemóvel que funciona só por preferência é o exemplo supérfluo do trabalho.",
+    "formula": "",
+    "presentationSlides": [
+      11,
+      12
+    ]
+  },
+  {
+    "id": "presentation_summary",
+    "label": "Conclusão da apresentação",
+    "category": "Poupança",
+    "aliases": [
+      "conclusao do trabalho",
+      "mensagem principal do trabalho",
+      "resumo da apresentacao"
+    ],
+    "answer": "Poupar ajuda a preparar o futuro e os imprevistos. Pequenas quantias podem fazer diferença quando são possíveis. O objetivo é usar o dinheiro com mais responsabilidade e organização, respeitando as necessidades e o orçamento.",
+    "detail": "Este conteúdo está explicado nos slides 14 da apresentação. A resposta pode ser aprofundada com um exemplo.",
+    "example": "Guardar 2 € por semana durante 10 semanas soma 20 €, se for possível no orçamento.",
+    "formula": "",
+    "presentationSlides": [
+      14
+    ]
+  }
+];
+  presentationTopics.forEach(t=>topics.push(t));
   root.SavingsKnowledge=Object.freeze(topics.map(t=>Object.freeze(t)));
 })(typeof window!=='undefined'?window:globalThis);

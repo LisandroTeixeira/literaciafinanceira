@@ -9,7 +9,7 @@
   const NUM='(-?(?:[0-9]{1,3}(?:[. ][0-9]{3})+(?:,[0-9]+)?|[0-9]+(?:[.,][0-9]+)?))';
   const parse=s=>Number(s.replace(/ /g,'').replace(/\.(?=\d{3}(?:\D|$))/g,'').replace(',','.'));
   const find=(text,pattern)=>{const m=text.match(new RegExp(pattern,'i'));return m?parse(m[1]):null;};
-  const field=(text,labels)=>find(text,'(?:'+labels+')\\s*(?:(?:de|e|era|eram|fosse|fossem|seria|seriam|for|seja|sao)\\s+|:\\s*|=\\s*)?\\s*'+NUM);
+  const field=(text,labels)=>find(text,'(?:'+labels+')\\s*(?:(?:de|e|era|eram|fosse|fossem|seria|seriam|forem|for|seja|sao)\\s+|:\\s*|=\\s*)?\\s*'+NUM);
   const result=(text,topic='saving',model)=>({text,topic,calculation:true,...(model?{model}: {})});
   function calculate(raw){
     const text=normNumber(raw);
@@ -119,6 +119,7 @@
   function respond(input, previous, selected){
     const text=normalize(input);
     if(selected){const topic=topics.find(t=>t.id===selected);if(topic)return render(topic);}
+    const presented=presentationTurn(input,previous?{topic:previous}:null);if(presented)return presented;
     // Não inventar estatísticas atuais nem confirmar valores relativos a países.
     if(/\b(atual|atuais|hoje|agora|202[0-9]|203[0-9]|mais recente|neste momento)\b/.test(text) && /\b(taxa|pib|inflacao|desemprego|juro|divida|membros|valor)\b/.test(text))return {text:'Este guia não consulta dados em tempo real. Para valores atuais, confirma no INE, Banco de Portugal, Eurostat ou BCE. Posso explicar o conceito e mostrar como se calcula.',topic:previous || null};
     if(/\b(pdf|apresentacao|slides|descarregar|baixar|download)\b/.test(text))return {text:'Na secção «Apresentação» podes abrir e descarregar o PDF com os slides sobre poupança.',topic:null,action:'apresentacao'};
@@ -671,6 +672,159 @@
     return null;
   }
 
+  // Knowledge grounded in the current presentation, separate from numeric operands.
+  const presentation=root.SavingsPresentation;
+  const presentationEntries=presentation?.topicos || [];
+  const presentationEntry=id=>presentationEntries.find(e=>e.id===id);
+  function presentationText(raw){
+    return queryText(naturalInput(raw)).replace(/^(?:por favor |podes |pode |consegues |sera que podes )/,'')
+      .replace(/\b(?:na|da|nesta|desta|a) apresentacao\b|\b(?:do|no|neste) trabalho\b/g,' ')
+      .replace(/\s+/g,' ').trim();
+  }
+  const presentationQuestions=presentationEntries.flatMap(entry=>entry.perguntas.map(q=>({entry,text:presentationText(q)})));
+  const presentationExamples={
+    definicao:{text:'Recebes 50 € e gastas 40 € no mesmo período: 50 € − 40 € = 10 € que podem ser guardados, se não houver outras despesas.',model:{kind:'budget',income:50,expense:40}},
+    formula:{text:'Recebes 100 € e gastas 80 €: 100 € − 80 € = 20 € de saldo no mesmo período.',model:{kind:'budget',income:100,expense:80}},
+    habitos:{text:'Guardar 2 € por semana durante 10 semanas permite juntar 20 €, se couber no orçamento e não houver levantamentos ou juros.',model:{kind:'periodic',amount:2,unit:'semana',time:10,timeUnit:'semana'}},
+    pequenosgastos:{text:'Um gasto opcional de 2 € por dia soma 60 € em 30 dias. Se deixares de fazer esse gasto e guardares a diferença, podes juntar 60 €.',model:{kind:'periodic',amount:2,unit:'dia',time:30,timeUnit:'dia'}},
+    objetivo:{text:'Queres ter 120 € daqui a 12 meses e partes de zero: 120 € ÷ 12 = 10 € por mês, sem juros.',model:{kind:'goal',target:120,initial:0,time:12,timeUnit:'mes'}},
+    destinos:{text:'Guardar para material escolar é um objetivo de educação. Reservar dinheiro para uma avaria é uma reserva para imprevistos.'},
+    ondeguardar:{text:'Um mealheiro pode separar moedas para uma compra pequena. Uma conta permite consultar os movimentos; as condições e os custos precisam de ser conhecidos.'},
+    despesasdistincao:{text:'Roupa básica pode ser necessária. Escolher uma marca apenas por preferência é o exemplo supérfluo da apresentação.'},
+    necessarias:{text:'Renda da casa, alimentação básica e medicamentos necessários são exemplos de despesas indispensáveis.'},
+    superfluas:{text:'Trocar um telemóvel que funciona só para ter um modelo novo e comprar acessórios de luxo são exemplos dispensáveis.'},
+    frase:{text:'Se o dinheiro chegar para o necessário e para uma pequena reserva, separar essa reserva no início ajuda a não a gastar por impulso. Se não houver margem, o plano tem de ser ajustado.'},
+    dicas:{text:'Antes de uma compra, faz uma lista do necessário e regista quanto gastaste. Se tiveres margem, separa uma pequena quantia para o objetivo.'},
+    conclusao:{text:'Guardar 2 € por semana durante 10 semanas soma 20 €. É uma pequena quantia regular, quando for possível.',model:{kind:'periodic',amount:2,unit:'semana',time:10,timeUnit:'semana'}}
+  };
+  function presentationAnswer(entry,text=entry.resposta,extra={}){
+    return {topic:entry.topic,text,presentationSlides:entry.slides,presentationState:{record:entry.id,...(presentation.listas[entry.id]?{list:entry.id}:{})},...extra};
+  }
+  function expenseAnswer(raw,context){
+    const t=queryText(raw),state=context?.presentationState;
+    const expenseTopics=['necessaryexpenses','superfluousexpenses','expenseclassification'];
+    const classify=/necessari\w*|superflu\w*|indispensav\w*|dispensav\w*|essenci\w*|classificar|qual coluna|que coluna|qual lado|onde coloco|em que grupo|classifica/.test(t);
+    const contextual=expenseTopics.includes(context?.topic) && !/o que e|como poupar|juros|inflacao|objetivo|por mes|por semana|quanto tempo/.test(t);
+    if(!classify&&!contextual)return null;
+    const candidates=[];
+    const item=(id,label,pattern)=>{if(pattern.test(t))candidates.push({id,label});};
+    item('housing','Habitação',/renda(?: da casa)?|prestacao (?:da casa|da habitacao)|habitacao/);
+    item('utilities','Água, luz e gás',/\bagua\b|\bluz\b|eletricidade|\bgas\b/);
+    item('health','Saúde e medicamentos',/saude|medicamentos?|remedios?/);
+    item('hygiene','Higiene',/higiene|sabonete|champ[oô]|pasta de dentes/);
+    item('transport','Transportes',/transportes?|autocarro|metro|combustivel|carro/);
+    item('school','Material escolar',/material escolar|livros? (?:da|para a) escola/);
+    item('phone','Telemóvel ou computador',/telemovel|computador|tablet|equipamento/);
+    item('clothes','Roupa e calçado',/roupa|cal[cç]ado|casaco|sapatos|uniforme|farda/);
+    item('restaurant','Comer fora',/comer fora|restaurantes?|refeicoes fora/);
+    if(!candidates.some(i=>i.id==='restaurant'))item('food','Alimentação',/alimentacao|comida|alimentos/);
+    item('luxury','Joias e acessórios de luxo',/j[oó]ias?|joalharia|acessorios.*luxo|luxo.*acessorios/);
+    item('travel','Viagens',/viagens?|viajar/);
+    if(!candidates.length&&state?.subject&&/^(e |mas |se |porque |por que |preciso |so |ja |nao |o meu |a minha )|sempre|avariou|partiu|estragou/.test(t))candidates.push({id:state.subject,label:state.subjectLabel});
+    if(!candidates.length)return null;
+    const answers=candidates.map(({id,label})=>{
+      let classification='necessária',reason='';
+      if(id==='housing')reason='A renda ou prestação assegura habitação; é um dos exemplos indispensáveis do trabalho.';
+      if(id==='utilities')reason='Os serviços básicos de água, luz e gás são exemplos necessários. Isso não significa que todo o consumo ou desperdício seja indispensável.';
+      if(id==='health')reason='Cuidados de saúde e medicamentos necessários satisfazem uma necessidade importante.';
+      if(id==='hygiene')reason='Produtos básicos de higiene são necessários; versões de luxo ou compras excessivas podem ser dispensáveis.';
+      if(id==='school')reason='Material efetivamente necessário para estudar é uma despesa essencial. Ter um objetivo para o comprar ajuda a preparar o custo.';
+      if(id==='food')reason='A alimentação básica é necessária. Produtos opcionais ou escolhas mais caras por preferência podem ter uma parte dispensável.';
+      if(id==='transport'){
+        if(/carro.*luxo/.test(t)){classification='supérflua na parte de luxo';reason='Ter transporte pode ser necessário, mas escolher a versão de luxo por preferência acrescenta uma parte dispensável.';}
+        else if(/escola|trabalho|(?:deslocacao|transporte) necessar|unica forma/.test(t))reason='Uma deslocação necessária para escola ou trabalho é o exemplo indispensável do trabalho.';
+        else {classification='depende do contexto';reason='Transportes para escola ou trabalho podem ser necessários. Uma deslocação por lazer ou um carro novo por preferência pode ser opcional.';}
+      }
+      if(id==='phone'){
+        if(/(?:nao funciona|avari\w*|parti\w*|estrag\w*|precis\w*.*(?:escola|trabalho)|(?:escola|trabalho).*precis\w*)/.test(t)){classification='pode ser necessária';reason='Se precisas do equipamento e ele deixou de cumprir a função, reparar ou substituir pode ser necessário. Compara alternativas adequadas e o custo.';}
+        else if(/sem necessidade|funciona|so (?:por|para)|por preferencia|modelo novo|mais novo/.test(t)){classification='supérflua';reason='Trocar um equipamento que ainda cumpre a função só por preferência é o exemplo dispensável da apresentação.';}
+        else {classification='depende do contexto';reason='Um equipamento necessário para estudo ou trabalho pode ser indispensável. Trocar de telemóvel sem necessidade é supérfluo. O motivo da compra é que decide.';}
+      }
+      if(id==='clothes'){
+        if(/basica|basico|uniforme|farda|inverno|nao tenho roupa/.test(t)&&!/sempre|marca/.test(t))reason='Roupa básica adequada pode ser necessária; é um dos exemplos do trabalho.';
+        else if(/marca/.test(t)&&/preferencia|luxo|status|so por/.test(t)){classification='supérflua';reason='Escolher roupa de marca apenas por preferência é o exemplo dispensável do slide.';}
+        else {classification='depende do contexto';reason='Roupa básica adequada pode ser necessária. O custo adicional de uma marca escolhida por preferência pode ser dispensável. Roupa não pertence sempre à mesma coluna.';}
+      }
+      if(id==='restaurant'){
+        if(/(?:nao tenho alternativa|nao posso cozinhar|refeicao necessaria|preciso.*(?:trabalho|escola))/.test(t)){classification='pode ser necessária';reason='Se a refeição é necessária e não tens uma alternativa adequada, o contexto pode justificar essa despesa. O exemplo supérfluo do trabalho é comer fora frequentemente por opção.';}
+        else if(/por opcao|por lazer|frequentemente|lazer|so porque/.test(t)&&!/sempre/.test(t)){classification='supérflua';reason='Comer fora frequentemente por opção é o exemplo dispensável da apresentação.';}
+        else {classification='depende do contexto';reason='Comer fora frequentemente por opção é o exemplo supérfluo do trabalho. Uma refeição necessária por circunstâncias concretas pode ter outra classificação.';}
+      }
+      if(id==='luxury'){classification='supérflua';reason='No contexto do exercício, joias e acessórios de luxo são despesas que podem ser adiadas ou dispensadas.';}
+      if(id==='travel'){
+        if(/lazer|ferias|por opcao/.test(t)){classification='supérflua';reason='Uma viagem de lazer é um objetivo opcional que pode ser planeado. Uma deslocação necessária tem outro contexto.';}
+        else {classification='depende do contexto';reason='Uma viagem de lazer pode ser dispensável; uma deslocação necessária por trabalho ou outra necessidade pode ser indispensável.';}
+      }
+      return label+' — '+classification+'. '+reason;
+    });
+    return {topic:'expenseclassification',text:answers.join('\n\n'),presentationSlides:candidates.some(i=>['travel','school','phone','health','housing','transport'].includes(i.id))?[7,11,12]:[11,12],presentationState:{record:'despesasdistincao',...(candidates.length===1?{subject:candidates[0].id,subjectLabel:candidates[0].label}:{})}};
+  }
+  function presentationTurn(raw,context){
+    if(!presentation)return null;
+    const t=queryText(raw),q=presentationText(raw),state=context?.presentationState;
+    // Actual money, periods and percentages remain with the existing calculation engine.
+    if(/\d/.test(t)&&!/\b(slide|slides|pagina|paginas|diapositivo|diapositivos)\b/.test(t)&&!/necessari|superflu|classifica|coluna/.test(t))return null;
+    const expense=expenseAnswer(raw,context);if(expense)return expense;
+    let record=state?.record?presentationEntry(state.record):null;
+    const generic=['qual e a diferenca'];
+    const exact=presentationQuestions.find(x=>x.text===q&&(!generic.includes(q)||record));
+    if(exact){const entry=exact.entry;return presentationAnswer(entry,entry.resposta,{...(entry.id==='formula'?{model:{kind:'budget',income:100,expense:80}}:{}),...(entry.id==='duvidasqr'?{action:'apresentacao'}:{})});}
+    // Answer a referenced line or topic within a slide, not merely a PDF download request.
+    const page=t.match(/\b(?:slide|pagina|diapositivo)\s*(?:numero |n )?(\d+|um|dois|tres|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|catorze|quatorze)\b/) || t.match(/\b(primeiro|segundo|terceiro|quarto|quinto|sexto)\s+(?:slide|diapositivo)\b/);
+    if(page){
+      const n=Number(page[1])||cardinals[page[1]]||({primeiro:1,segundo:2,terceiro:3,quarto:4,quinto:5,sexto:6})[page[1]];if(!n||n<1||n>14)return {topic:'presentation_intro',clarification:true,text:'Esta apresentação tem 14 slides. Qual deles queres rever?'};
+      const byPage={1:'apresentacao',2:'definicao',3:'formula',4:'importancia',5:'habitos',6:'destinos',7:'destinos',8:'dicas',9:'naopoupar',10:'ondeguardar',11:'classificarexercicio',12:'despesasdistincao',13:'duvidasqr',14:'conclusao'};
+      let entry=presentationEntry(byPage[n]);
+      if(n===7&&/frase|buffett|sobra|antes de gastar/.test(t))entry=presentationEntry('frase');
+      if(n===12&&/necessari|coluna a/.test(t)&&!/superflu|diferenca/.test(t))entry=presentationEntry('necessarias');
+      if(n===12&&/superflu|coluna b/.test(t)&&!/necessari|diferenca/.test(t))entry=presentationEntry('superfluas');
+      return presentationAnswer(entry,'Slide '+n+'\n'+entry.resposta,{presentationSlides:[n],...(entry.id==='formula'?{model:{kind:'budget',income:100,expense:80}}:{}),...(entry.id==='duvidasqr'?{action:'apresentacao'}:{})});
+    }
+    if(record){
+      const ordinal=t.match(/\b(primeir[oa]|segund[oa]|terceir[oa]|quart[oa]|quint[oa]|sext[oa]|ultim[oa])\b/);
+      const list=state.list&&presentation.listas[state.list];
+      if(list&&ordinal&&/dica|ponto|passo|explica|porque|por que/.test(t)){
+        const i={primeiro:0,primeira:0,segundo:1,segunda:1,terceiro:2,terceira:2,quarto:3,quarta:3,quinto:4,quinta:4,sexto:5,sexta:5,ultimo:list.length-1,ultima:list.length-1}[ordinal[1]];
+        if(i>=list.length)return presentationAnswer(record,'Este conjunto tem '+list.length+' pontos. Qual deles queres esclarecer?',{clarification:true});
+        const explanations=state.list==='habitos'?['Saber para que estás a guardar dá uma finalidade ao plano e permite calcular uma meta.','Uma quantia pequena e possível repetida em vários períodos pode acumular-se.','Conhecer os gastos ajuda a distinguir o que é essencial do que pode esperar.']:['Separar uma quantia possível ajuda a não a gastar por impulso; as despesas necessárias continuam a ter prioridade.','A lista recorda o que precisas e limita compras decididas no momento.','Um gasto pequeno repetido pode somar uma quantia elevada ao fim do tempo.','Uma meta com preço e prazo permite acompanhar o progresso.','O registo mostra quanto gastaste e em quê, incluindo pequenas compras.','O mealheiro ajuda a separar o dinheiro, mas pode ser perdido, roubado ou danificado.'];
+        return presentationAnswer(record,(i+1)+'. '+list[i]+'\n\n'+explanations[i]);
+      }
+      if(!context?.model){
+        const facet=Object.entries(record.seguimentos).find(([question])=>presentationText(question)===q);
+        if(facet)return presentationAnswer(record,facet[1]);
+        if(/^(?:e )?(?:da me |podes dar |outro |um )?(?:outro |um )?exemplo$|^da um exemplo$/.test(q)){
+          const sample=presentationExamples[record.id];if(sample)return presentationAnswer(record,'Exemplo\n'+sample.text,sample.model?{model:{...sample.model}}:{});
+          return presentationAnswer(record,'Exemplo\n'+topics.find(x=>x.id===record.topic).example);
+        }
+        if(/^(?:e )?(?:explica melhor|nao percebi|nao entendi|mais simples|resume|resumo|como assim|porque|por que)$/.test(q)){
+          return presentationAnswer(record,record.resposta);
+        }
+      }
+      if(record.id==='ondeguardar'&&/^(?:e )?(?:qual|qual deles|qual e melhor|e melhor qual)$/.test(q))return presentationAnswer(record,'Depende do objetivo, do prazo e das condições. O mealheiro ajuda a separar pequenas quantias, mas tem riscos físicos. Uma conta permite consultar movimentos; confirma custos, acesso e remuneração antes de comparar.');
+      if(record.id==='frase'&&/obrigatori|sempre|antes de tudo|nao sobra/.test(t))return presentationAnswer(record,record.seguimentos['É obrigatório poupar antes de tudo?']);
+      if(record.id==='destinos'&&/^(?:e )?(?:qual|o que) (?:vem|devo).*primeiro|prioridade|mais importante/.test(t))return presentationAnswer(record,record.seguimentos['Qual vem primeiro?']);
+    }
+    // Semantic sentence families for source-specific subjects.
+    let id;
+    if(/destinos?/.test(t)&&/poup|dinheiro/.test(t)||/para que (?:posso )?(?:juntar dinheiro|usar (?:a |as |minha |minhas )?poupanca)/.test(t))id='destinos';
+    else if(/frase|buffett/.test(t)&&/poup|guardar|gastar|sobra|slide|buffett/.test(t))id='frase';
+    else if(/nao poup|sem poupanca|nunca poup|nao guardar|nunca guardar|sem reserva/.test(t)&&/acontece|consequencia|risco|problema/.test(t))id='naopoupar';
+    else if(/ciclo.*divid|divid.*ciclo/.test(t))id='dividas';
+    else if(/coluna a|exemplos.*despesas (?:necessarias|indispensaveis)|quais.*despesas (?:necessarias|indispensaveis)/.test(t))id='necessarias';
+    else if(/coluna b|exemplos.*despesas (?:superfluas|dispensaveis)|quais.*despesas (?:superfluas|dispensaveis)/.test(t))id='superfluas';
+    else if(/despesas/.test(t)&&/necessari|indispensav|essencia/.test(t)&&/superflu|dispensav|opcionais/.test(t))id='despesasdistincao';
+    else if(/tabela|classificar.*despesas|exercicio.*despesas/.test(t))id='classificarexercicio';
+    else if(/mealheiro/.test(t)&&/riscos?|vantag|roubad|perdid|danific|juros|segur/.test(t))id='mealheiro';
+    else if(/conta bancaria|banco/.test(t)&&/transferencias|movimentos|regist|sempre.*juros/.test(t))id='contabancaria';
+    else if(/qr code|codigo qr/.test(t))id='duvidasqr';
+    else if(/conclusao|mensagem principal|resumo/.test(t)&&/trabalho|apresentacao|poupanca/.test(t))id='conclusao';
+    else if((/quem/.test(t)&&/fez|elaborou|criou|elaborado/.test(t)||/autores?/.test(t))&&/site|trabalho|apresentacao/.test(t))id='apresentacao';
+    else if(/seis dicas|6 dicas|dicas.*(?:trabalho|apresentacao)/.test(t))id='dicas';
+    else if(/tres (?:passos|habitos)|3 (?:passos|habitos)/.test(t)&&/poup/.test(t))id='habitos';
+    if(id)return presentationAnswer(presentationEntry(id),undefined,id==='duvidasqr'?{action:'apresentacao'}:{});
+    return null;
+  }
+
   function createSession(){
     let active=null,history=[];
     function prepare(input,anchor){
@@ -694,11 +848,13 @@
         !best.guide && context.model && Object.keys(edits(value,context.model)).length &&
         (follow || /\d/.test(text) && !/o que|explica|defin|significa/.test(text))
       );
+      const presented=presentationTurn(value,context);
       if(!value)answer={text:'Escreve a tua pergunta para começarmos.',topic:null,clarification:true};
       else if(/^(esquece|esquece isso|muda de assunto|novo assunto|outra pergunta|recomecar|recomeca)$/.test(text))answer={text:'Está bem. Qual é a nova pergunta?',topic:null};
       else if(/^(obrigad[oa]|muito obrigad[oa]|valeu|obg|ok|okay|certo|entendi|percebi|sim)$/.test(text)){answer={text:/obrig|valeu|obg/.test(text)?'De nada! Se quiseres, podemos continuar este exemplo ou passar a outra pergunta.':'Certo. Podes continuar o exemplo ou fazer uma nova pergunta.',topic:context?.topic || null};retain=true;}
       else if(/^(esta errado|isso esta errado|nao e isso|nao foi isso|enganei me|nao)$/.test(text)){answer={text:context?.model?'Qual é o dado que queres corrigir? Indica o nome e o novo valor, por exemplo a quantia, o prazo ou a taxa.':'Que parte queres esclarecer? Podes reformular a pergunta.',topic:context?.topic || null,clarification:true};retain=true;}
       else if(/\b\d+(?:[.,]\d+)?e[+-]?\d+\b/i.test(value))answer={text:'Escreve os números por extenso em algarismos, sem notação científica, por exemplo 1000 ou 2,50.',topic:context?.topic || null,clarification:true};
+      else if(presented)answer=presented;
       else if(/guardar|poupar|juntar|depositos/i.test(text) && /com juros|juros de|juros a|com comissoes|com impostos/.test(text) && !/por mes|mensal|reforco/.test(text))answer={text:'Para combinar depósitos regulares com juros ou outros custos, faltam condições como as datas dos depósitos e a capitalização. Podemos fazer a soma dos depósitos sem juros, ou um exercício de juros simples ou compostos sobre um capital inicial.',topic:context?.topic || null,clarification:true};
       else if(/\b(pdf|apresentacao|slides|descarregar|baixar|download)\b/.test(text) || /^(ola|oi|bom dia|boa tarde|boa noite|hey)( tudo bem)?$/.test(text))answer=respond(value);
       else if(/\b(atual|atuais|hoje|agora|202[0-9]|203[0-9]|mais recente|neste momento)\b/.test(text) && /\b(taxa|pib|inflacao|desemprego|juro|divida|membros|valor)\b/.test(text))answer=respond(value);
@@ -755,7 +911,7 @@
       if(answer.topic){
         const same=context?.topic===answer.topic;
         const model=answer.model || (retain && same?context.model:undefined);
-        answer.context={topic:answer.topic,text:answer.text,source:same && (!answer.model || answer.model===context.model)?context.source || context.text:answer.text,model:model?{...model}:undefined,pending:!!answer.pending,askKey:answer.askKey,related:answer.related || (same?context.related:undefined),tipIndex:answer.tipIndex || 0};
+        answer.context={topic:answer.topic,text:answer.text,source:same && (!answer.model || answer.model===context.model)?context.source || context.text:answer.text,model:model?{...model}:undefined,pending:!!answer.pending,askKey:answer.askKey,presentationState:answer.presentationState || (same?context.presentationState:undefined),presentationSlides:answer.presentationSlides || (same?context.presentationSlides:undefined),related:answer.related || (same?context.related:undefined),tipIndex:answer.tipIndex || 0};
       }else answer.context=null;
       return answer;
     }

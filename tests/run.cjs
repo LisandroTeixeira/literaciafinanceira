@@ -6,3 +6,5 @@ require('./conversation.test.cjs');
 require('./savings.test.cjs');
 
 require('./intelligence.test.cjs');
+
+require('./presentation.test.cjs');
